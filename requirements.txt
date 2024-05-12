@@ -3,3 +3,7 @@ pre-commit
 flake8
 black
 mypy
+h5py
+torch
+torch_geometric
+pandas

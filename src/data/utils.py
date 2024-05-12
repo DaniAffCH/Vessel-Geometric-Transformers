@@ -2,19 +2,21 @@ import os
 
 import gdown
 
-from src.constants import DATASET_DRIVE_URL, DATASET_NAME
+from src.constants import (
+    DATASET_DOWNLOAD_PATH,
+    DATASET_DRIVE_URL,
+    DATASET_NAME,
+)
 
 
-def download_dataset(
-    download_path: str = "dataset", force_download: bool = False
-) -> None:
+def download_dataset(force_download: bool = False) -> None:
 
-    if not os.path.exists(download_path):
-        os.mkdir(download_path)
+    if not os.path.exists(DATASET_DOWNLOAD_PATH):
+        os.mkdir(DATASET_DOWNLOAD_PATH)
 
-    dataset_path = os.path.join(download_path, DATASET_NAME)
+    dataset_path = os.path.join(DATASET_DOWNLOAD_PATH, DATASET_NAME)
 
     if not os.path.exists(dataset_path) or force_download:
-        gdown.download_folder(DATASET_DRIVE_URL, output=download_path)
+        gdown.download_folder(DATASET_DRIVE_URL, output=DATASET_DOWNLOAD_PATH)
     else:
         print(f"Dataset found at {dataset_path}")
