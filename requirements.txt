@@ -5,5 +5,4 @@ black
 mypy
 h5py
 torch
-torch_geometric
-pandas
+torch_geometric==2.5.3
