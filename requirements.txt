@@ -2,3 +2,4 @@ gdown
 pre-commit
 flake8
 black
+mypy

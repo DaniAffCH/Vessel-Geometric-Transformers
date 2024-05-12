@@ -26,4 +26,5 @@ repos:
     hooks:
       - id: mypy
         types: [python]
-        args: [--strict]
+        args: [--strict, --ignore-missing-imports]
+        
