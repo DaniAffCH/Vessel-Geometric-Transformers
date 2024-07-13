@@ -18,12 +18,12 @@ repos:
         args: ["--profile", "black", "--line-length", "79"]
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
+    rev: 7.1.0
     hooks:
       - id: flake8
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v1.10.1
     hooks:
       - id: mypy
         types: [python]
