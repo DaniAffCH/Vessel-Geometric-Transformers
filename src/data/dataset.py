@@ -122,4 +122,5 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             for i in range(len(data_list)):
                 data_list[i] = self.pre_transform(data_list[i])
 
-        self.save(data_list, self.processed_paths[0])
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
