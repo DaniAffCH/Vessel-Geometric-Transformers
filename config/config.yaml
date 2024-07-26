@@ -1,0 +1,6 @@
+dataset:
+  drive_url: "https://drive.google.com/drive/folders/18lNjZPYKLmd7w-UX7GwepHAy2R-3YP3W"
+  name: "stead"
+  download_path: "dataset"
+  bifurcating_path: "bifurcating/raw/database.hdf5"
+  single_path: "single/raw/database.hdf5"

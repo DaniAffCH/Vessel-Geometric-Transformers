@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Callable, List, Optional
 
 import gdown
@@ -6,44 +7,72 @@ import h5py
 import torch
 from torch_geometric.data import Data, InMemoryDataset
 
-from src.constants import (
-    BIFURACTING_DB,
-    DATASET_DOWNLOAD_PATH,
-    DATASET_DRIVE_URL,
-    DATASET_NAME,
-    SINGLE_DB,
-)
+from config import DatasetConfig
 
 
 class VesselDataset(InMemoryDataset):  # type: ignore[misc]
     def __init__(
         self,
-        root: Optional[str] = None,
+        config: DatasetConfig,
+        purpose: str,
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
     ) -> None:
-        super().__init__(root, transform, pre_transform)
+        self.config = config
+        self.purpose = purpose
+        super(VesselDataset, self).__init__(
+            config.download_path, transform, pre_transform
+        )
 
     @property
     def raw_file_names(self) -> List[str]:
-        root = os.path.abspath(
+        r"""
+        The name of the files in the :obj:`self.raw_dir` folder that must be
+        present in order to skip downloading. Acts as base property needed for
+        `raw_paths`.
+
+        Returns
+        -------
+        List[str]
+            The name of the file(s) that need to be downloaded.
+        """
+        project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..")
         )
-        return [os.path.join(root, self.root, DATASET_NAME)]
+        return [os.path.join(project_root, self.root, self.config.name)]
+
+    @property
+    def processed_file_names(self) -> List[str]:
+        r"""The name of the files in the :obj:`self.processed_dir` folder that
+        must be present in order to skip processing. Acts as base property
+        needed for `processed_paths`.
+
+        Returns
+        -------
+        List[str]
+            The name of the file(s) that are the result of running the download
+            and process methods.
+        """
+        project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..")
+        )
+        data_root = os.path.join(
+            project_root, self.root, "processed", self.purpose
+        )
+        Path(data_root).mkdir(parents=True, exist_ok=True)
+        return [os.path.join(self.purpose, "data.pt")]
 
     @property
     def has_download(self) -> bool:
         return True
 
-    @property
-    def processed_file_names(self) -> List[str]:
-        return ["TODO -- Implementa"]
-
     def download(self) -> None:
         if not os.path.exists(self.root):
             os.mkdir(self.root)
 
-        gdown.download_folder(DATASET_DRIVE_URL, output=DATASET_DOWNLOAD_PATH)
+        gdown.download_folder(
+            self.config.drive_url, output=self.config.download_path
+        )
 
     def get_data_from_h5(self, sample: h5py.Group) -> Data:
         # It can be expanded depending on what we need
@@ -70,8 +99,12 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
     def process(self) -> None:
         data_list = list()
 
-        bifurcating_db_path = os.path.join(self.raw_paths[0], BIFURACTING_DB)
-        single_db_path = os.path.join(self.raw_paths[0], SINGLE_DB)
+        bifurcating_db_path = os.path.join(
+            self.raw_paths[0], self.config.bifurcating_path
+        )
+        single_db_path = os.path.join(
+            self.raw_paths[0], self.config.single_path
+        )
 
         data_list.extend(self.process_h5(bifurcating_db_path))
         data_list.extend(self.process_h5(single_db_path))
@@ -89,4 +122,5 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             for i in range(len(data_list)):
                 data_list[i] = self.pre_transform(data_list[i])
 
-        self.save(data_list, self.processed_paths[0])
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
