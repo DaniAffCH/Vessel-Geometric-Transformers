@@ -6,3 +6,9 @@ mypy
 h5py
 torch
 torch_geometric==2.5.3
+tqdm
+omegaconf
+pytest
+pathlib
+types-PyYAML
+yaml
