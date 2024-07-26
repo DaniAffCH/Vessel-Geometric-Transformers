@@ -10,5 +10,5 @@ tqdm
 omegaconf
 pytest
 pathlib
+pyyaml
 types-PyYAML
-yaml
