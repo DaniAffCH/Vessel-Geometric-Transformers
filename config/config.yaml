@@ -4,3 +4,6 @@ dataset:
   download_path: "dataset"
   bifurcating_path: "bifurcating/raw/database.hdf5"
   single_path: "single/raw/database.hdf5"
+  train_size: 0.75
+  val_size: 0.15
+  test_size: 0.1

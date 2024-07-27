@@ -1,6 +1,7 @@
 import os
+from copy import deepcopy
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import gdown
 import h5py
@@ -125,3 +126,46 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
+
+
+def random_split(
+    dataset: InMemoryDataset, ratios: List[float]
+) -> List[InMemoryDataset]:
+    # TODO: not complete yet!
+    assert (
+        sum(ratios) == 1.0
+    ), "The dataset splits (train + val + test) must sum up to 1"
+
+    dataset = dataset.shuffle()
+
+    splitted_datasets = []
+
+    for i in range(len(ratios)):
+        splitted_datasets.append(deepcopy(dataset))
+
+    return splitted_datasets
+
+
+def get_datasets(dataset_config: DatasetConfig) -> Dict[str, VesselDataset]:
+    assert (
+        dataset_config.train_size
+        + dataset_config.val_size
+        + dataset_config.test_size
+        == 1.0
+    ), "The dataset splits (train + val + test) must sum up to 1"
+
+    dataset: VesselDataset = VesselDataset(dataset_config, "complete")
+    train_dataset, val_dataset, test_dataset = random_split(
+        dataset,
+        [
+            dataset_config.train_size,
+            dataset_config.val_size,
+            dataset_config.test_size,
+        ],
+    )
+
+    return {
+        "train": train_dataset,
+        "val": val_dataset,
+        "test": test_dataset,
+    }

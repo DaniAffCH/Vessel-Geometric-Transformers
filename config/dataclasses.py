@@ -9,6 +9,9 @@ class DatasetConfig:
     download_path: str = MISSING
     bifurcating_path: str = MISSING
     single_path: str = MISSING
+    train_size: float = MISSING
+    val_size: float = MISSING
+    test_size: float = MISSING
 
 
 @dataclass
