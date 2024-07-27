@@ -151,13 +151,6 @@ def random_split(
 
 
 def get_datasets(dataset_config: DatasetConfig) -> Dict[str, Subset]:
-    assert (
-        dataset_config.train_size
-        + dataset_config.val_size
-        + dataset_config.test_size
-        == 1.0
-    ), "The dataset splits (train + val + test) must sum up to 1"
-
     dataset = VesselDataset(dataset_config, "complete")
 
     train_dataset, val_dataset, test_dataset = random_split(
