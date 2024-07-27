@@ -5,6 +5,7 @@ from typing import Callable, List, Optional
 import gdown
 import h5py
 import torch
+import tqdm
 from torch_geometric.data import Data, InMemoryDataset
 
 from config import DatasetConfig
@@ -88,7 +89,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
     def process_h5(self, h5_path: str) -> List[Data]:
         data_list = list()
         with h5py.File(h5_path, "r") as f:
-            for sample_name in f:
+            for sample_name in tqdm.tqdm(f, desc=f"Loading {h5_path}"):
                 assert (
                     len(f[sample_name].keys()) == 5
                 ), f"Corrupted sample found, {sample_name}"
