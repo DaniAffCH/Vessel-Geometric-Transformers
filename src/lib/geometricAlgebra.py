@@ -43,13 +43,9 @@ class GeometricAlgebraBase(ABC):
         Returns:
             torch.Tensor: The resulting multivector.
         """
-        cls._validate_element(element)  # Validate the input element
-        v = cls._getEmptyMultivector(
-            element.shape[0]
-        )  # Create an empty multivector
-        cls._fill_multivector(
-            v, element
-        )  # Fill the multivector with the element data
+        cls._validate_element(element)
+        v = cls._getEmptyMultivector(element.shape[0])
+        cls._fill_multivector(v, element)
         return v
 
     @staticmethod
