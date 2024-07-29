@@ -73,7 +73,7 @@ class TranslationGeometricAlgebra(GeometricAlgebraBase):
         coordExpected = 3
         dimExpected = 2
         assert (
-            element.ndim == 2
+            element.ndim == dimExpected
         ), f"Expected an element with {dimExpected} dimensions,\
              {element.ndim} given"
         assert (
