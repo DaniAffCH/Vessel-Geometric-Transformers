@@ -13,6 +13,14 @@ from config import DatasetConfig
 
 
 class VesselDataset(InMemoryDataset):  # type: ignore[misc]
+    """
+    Dataset class for handling vessel data.
+
+    This class inherits from InMemoryDataset and is used to
+    handle vessel dataset.
+    The data is expected to be in HDF5 format.
+    """
+
     def __init__(
         self,
         config: DatasetConfig,
@@ -20,6 +28,20 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
     ) -> None:
+        """
+        Initialize the dataset.
+
+        Args:
+            config (DatasetConfig): Configuration object containing
+                                    dataset paths and parameters.
+            purpose (str): Purpose of the dataset,
+                           e.g., 'train', 'val', 'test'.
+            transform (Callable, optional): A function/transform that takes in
+                                            a Data object and returns a
+                                            transformed version.
+            pre_transform (Callable, optional): A function/transform that is
+                                                applied before the transform.
+        """
         self.config = config
         self.purpose = purpose
         super(VesselDataset, self).__init__(
@@ -34,14 +56,11 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
     @property
     def raw_file_names(self) -> List[str]:
         """
-        The name of the files in the :obj:`self.raw_dir` folder that must be
-        present in order to skip downloading. Acts as base property needed for
-        `raw_paths`.
+        The names of the files in the raw directory that
+        must be present to skip downloading.
 
-        Returns
-        -------
-        List[str]
-            The name of the file(s) that need to be downloaded.
+        Returns:
+            List[str]: The names of the files required for the dataset.
         """
         project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..")
@@ -50,15 +69,12 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
     @property
     def processed_file_names(self) -> List[str]:
-        """The name of the files in the :obj:`self.processed_dir` folder that
-        must be present in order to skip processing. Acts as base property
-        needed for `processed_paths`.
+        """
+        The names of the files in the processed directory that
+        must be present to skip processing.
 
-        Returns
-        -------
-        List[str]
-            The name of the file(s) that are the result of running the download
-            and process methods.
+        Returns:
+            List[str]: The names of the processed files.
         """
         project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..")
@@ -71,9 +87,18 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
     @property
     def has_download(self) -> bool:
+        """
+        Indicate whether the dataset has a download method.
+
+        Returns:
+            bool: True if the dataset can be downloaded, else False.
+        """
         return True
 
     def download(self) -> None:
+        """
+        Download the dataset files from the specified URL.
+        """
         if not os.path.exists(self.root):
             os.mkdir(self.root)
         gdown.download_folder(
@@ -81,8 +106,15 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         )
 
     def get_data_from_h5(self, sample: h5py.Group) -> Data:
-        # It can be expanded depending on what we need
-        # https://github.com/sukjulian/coronary-mesh-convolution/blob/main/datasets.py#L75
+        """
+        Extract data from an HDF5 sample group and create a Data object.
+
+        Args:
+            sample (h5py.Group): The HDF5 group containing the sample data.
+
+        Returns:
+            Data: The created Data object.
+        """
         return Data(
             wss=torch.from_numpy(sample["wss"][()]),
             pos=torch.from_numpy(sample["pos"][()]),
@@ -92,6 +124,15 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         )
 
     def process_h5(self, h5_path: str) -> List[Data]:
+        """
+        Process the HDF5 file and create a list of Data objects.
+
+        Args:
+            h5_path (str): The path to the HDF5 file.
+
+        Returns:
+            List[Data]: A list of created Data objects.
+        """
         data_list = []
         with h5py.File(h5_path, "r") as f:
             for sample_name in tqdm.tqdm(f, desc=f"Loading {h5_path}"):
@@ -103,6 +144,9 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         return data_list
 
     def process(self) -> None:
+        """
+        Process the raw data files and save the processed data.
+        """
         data_list = []
 
         bifurcating_db_path = os.path.join(
@@ -128,6 +172,17 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 def random_split(
     dataset: InMemoryDataset, ratios: List[float]
 ) -> List[Subset]:
+    """
+    Split the dataset into subsets based on the given ratios.
+
+    Args:
+        dataset (InMemoryDataset): The dataset to split.
+        ratios (List[float]): The ratios for splitting the dataset
+                              (e.g., [0.7, 0.2, 0.1]).
+
+    Returns:
+        List[Subset]: A list of subsets created from the dataset.
+    """
     assert (
         sum(ratios) == 1.0
     ), "The dataset splits (train + val + test) must sum up to 1"
@@ -151,6 +206,17 @@ def random_split(
 
 
 def get_datasets(dataset_config: DatasetConfig) -> Dict[str, Subset]:
+    """
+    Get the training, validation, and test datasets.
+
+    Args:
+        dataset_config (DatasetConfig): The configuration object containing
+                                        dataset parameters.
+
+    Returns:
+        Dict[str, Subset]: A dictionary containing the training,
+                           validation, and test datasets.
+    """
     dataset = VesselDataset(dataset_config, "complete")
 
     train_dataset, val_dataset, test_dataset = random_split(
