@@ -211,12 +211,9 @@ class ScalarGeometricAlgebra(GeometricAlgebraBase):
         return v
 
 
-# TODO: Non ho capito perchè l'attributo face ha shape [3, 38430]
-# mentre un plane si aspetta 4 parametri
 class PlaneGeometricAlgebra(GeometricAlgebraBase):
     """
     Geometric algebra operations specific to planes.
-    This class is not fully implemented.
     """
 
     @override
@@ -227,11 +224,17 @@ class PlaneGeometricAlgebra(GeometricAlgebraBase):
 
         Args:
             element (torch.Tensor): The input tensor representing the plane.
-
-        Raises:
-            NotImplementedError: This method is not yet implemented.
         """
-        raise NotImplementedError()
+        coordExpected = 3
+        dimExpected = 2
+        assert (
+            element.ndim == dimExpected
+        ), f"Expected an element with {dimExpected} dimensions,\
+             {element.ndim} given"
+        assert (
+            element.shape[1] == coordExpected
+        ), f"Expected a plane to have {coordExpected} coordinates,\
+             {element.shape[1]} given"
 
     @override
     @staticmethod
@@ -240,12 +243,14 @@ class PlaneGeometricAlgebra(GeometricAlgebraBase):
     ) -> torch.Tensor:
         """
         Fill the multivector with plane data.
+        It assumes there is no origin shift
 
         Args:
             v (torch.Tensor): The empty multivector tensor to fill.
             element (torch.Tensor): The input tensor containing the plane data.
 
-        Raises:
-            NotImplementedError: This method is not yet implemented.
+        Returns:
+            torch.Tensor: The filled multivector.
         """
-        raise NotImplementedError()
+        v[:, 2:5] = element
+        return v
