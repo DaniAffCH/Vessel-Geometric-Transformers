@@ -129,7 +129,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             Data: The created Data object.
         """
         # The face transpose is a trick to enable collate.
-        return Vessel(
+        return Data(
             wss=torch.from_numpy(sample["wss"][()]),
             pos=torch.from_numpy(sample["pos"][()]),
             pressure=torch.from_numpy(sample["pressure"][()]),
