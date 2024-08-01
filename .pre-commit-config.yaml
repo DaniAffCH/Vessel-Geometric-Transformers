@@ -23,9 +23,11 @@ repos:
       - id: flake8
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.0
+    rev: v1.11.1
     hooks:
       - id: mypy
         types: [python]
         args: [--strict, --ignore-missing-imports, --install-types, --non-interactive]
+        disable_error_code: import-untyped
+        plugins: [mypy_pytorch_lightning]
         

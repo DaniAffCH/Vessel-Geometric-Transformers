@@ -1,15 +1,15 @@
 import os
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
 import gdown
 import h5py
 import torch
 import tqdm
-from torch.utils.data import Subset
 from torch_geometric.data import Data, InMemoryDataset
 
 from config import DatasetConfig
+from src.data.vessel import Vessel
 
 
 class VesselDataset(InMemoryDataset):  # type: ignore[misc]
@@ -52,6 +52,19 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         else:
             self.data = None
             self.slices = None
+
+    def __getitem__(self, idx: int) -> Vessel:
+        """
+        Get the item at the specified index.
+
+        Args:
+            idx (int): The index of the item to retrieve.
+
+        Returns:
+            Data: The item at the specified index.
+        """
+        elem: Vessel = self.get(idx)
+        return elem
 
     @property
     def raw_file_names(self) -> List[str]:
@@ -116,7 +129,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             Data: The created Data object.
         """
         # The face transpose is a trick to enable collate.
-        return Data(
+        return Vessel(
             wss=torch.from_numpy(sample["wss"][()]),
             pos=torch.from_numpy(sample["pos"][()]),
             pressure=torch.from_numpy(sample["pressure"][()]),
@@ -168,69 +181,3 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
-
-
-def random_split(
-    dataset: InMemoryDataset, ratios: List[float]
-) -> List[Subset]:
-    """
-    Split the dataset into subsets based on the given ratios.
-
-    Args:
-        dataset (InMemoryDataset): The dataset to split.
-        ratios (List[float]): The ratios for splitting the dataset
-                              (e.g., [0.7, 0.2, 0.1]).
-
-    Returns:
-        List[Subset]: A list of subsets created from the dataset.
-    """
-    assert (
-        sum(ratios) == 1.0
-    ), "The dataset splits (train + val + test) must sum up to 1"
-
-    n_samples = len(dataset)
-    indices = list(range(n_samples))
-
-    split_indices = [int(ratio * n_samples) for ratio in ratios]
-    split_indices[-1] = n_samples - sum(split_indices[:-1])
-
-    start_idx = 0
-    splitted_datasets = []
-
-    for size in split_indices:
-        end_idx = start_idx + size
-        subset_indices = indices[start_idx:end_idx]
-        splitted_datasets.append(Subset(dataset, subset_indices))
-        start_idx = end_idx
-
-    return splitted_datasets
-
-
-def get_datasets(dataset_config: DatasetConfig) -> Dict[str, Subset]:
-    """
-    Get the training, validation, and test datasets.
-
-    Args:
-        dataset_config (DatasetConfig): The configuration object containing
-                                        dataset parameters.
-
-    Returns:
-        Dict[str, Subset]: A dictionary containing the training,
-                           validation, and test datasets.
-    """
-    dataset = VesselDataset(dataset_config, "complete")
-
-    train_dataset, val_dataset, test_dataset = random_split(
-        dataset,
-        [
-            dataset_config.train_size,
-            dataset_config.val_size,
-            dataset_config.test_size,
-        ],
-    )
-
-    return {
-        "train": train_dataset,
-        "val": val_dataset,
-        "test": test_dataset,
-    }

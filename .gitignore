@@ -10,6 +10,9 @@
 *.userosscache
 *.sln.docstates
 
+#pytorch lightning (TODO for now these logs are empty and just clutter the repo)
+lightning_logs/ 
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

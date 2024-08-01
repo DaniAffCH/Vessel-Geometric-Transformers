@@ -6,9 +6,11 @@ mypy
 h5py
 torch
 torch_geometric==2.5.3
+lightning
 tqdm
 omegaconf
 pytest
 pathlib
 pyyaml
 types-PyYAML
+types-tqdm
