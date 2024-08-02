@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from dataclasses import dataclass, field
+from typing import List
 
 import lightning as L
 import torch
@@ -129,7 +130,14 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
         return splitted_datasets
 
 
-def collate_vessels(batch: List[Vessel]) -> Tuple[Tensor, Tensor]:
+@dataclass
+class VesselBatch:
+    data: Tensor = field(default_factory=Tensor)
+    mask: Tensor = field(default_factory=Tensor)
+    labels: Tensor = field(default_factory=Tensor)
+
+
+def collate_vessels(batch: List[Vessel]) -> VesselBatch:
     """
     Collates a batch of Vessel objects into padded tensors.
 
@@ -145,7 +153,7 @@ def collate_vessels(batch: List[Vessel]) -> Tuple[Tensor, Tensor]:
     assert isinstance(elem, (Vessel, Data)), "DataLoader found invalid type"
 
     max_size = max(vessel.pos.shape[0] for vessel in batch)
-    padded_batch: List[Tensor] = []
+    padded_data: List[Tensor] = []
     masks: List[Tensor] = []
 
     for vessel in batch:
@@ -164,13 +172,19 @@ def collate_vessels(batch: List[Vessel]) -> Tuple[Tensor, Tensor]:
         pad_value = -1  # hardcodato
         padding = (0, 0, 0, max_size - vessel.pos.shape[0])
         padded_tensor = F.pad(tensor, padding, "constant", pad_value)
-        padded_batch.append(padded_tensor)
+        padded_data.append(padded_tensor)
 
         # Mask: 1 for real data, 0 for padded data
         mask = (padded_tensor != pad_value).float()
         masks.append(mask)
 
-    return torch.stack(padded_batch), torch.stack(masks)
+    collated_batch = VesselBatch(
+        data=torch.stack(padded_data),
+        mask=torch.stack(masks),
+        labels=torch.tensor([vessel.label.value for vessel in batch]),
+    )
+
+    return collated_batch
 
 
 def normalize(data: Tensor) -> Tensor:
