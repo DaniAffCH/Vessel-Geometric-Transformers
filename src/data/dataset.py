@@ -171,8 +171,6 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         single_db_path = os.path.join(
             self.raw_paths[0], self.config.single_path
         )
-
-        # per mo gli passo il label accoppiato al path
         data_list.extend(
             self.process_h5(bifurcating_db_path, Category.Bifurcating)
         )

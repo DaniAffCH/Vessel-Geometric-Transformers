@@ -151,6 +151,7 @@ def collate_vessels(batch: List[Vessel]) -> VesselBatch:
 
     elem: Vessel = batch[0]
     assert isinstance(elem, (Vessel, Data)), "DataLoader found invalid type"
+    pad_value = -1
 
     max_size = max(vessel.pos.shape[0] for vessel in batch)
     padded_data: List[Tensor] = []
@@ -169,7 +170,6 @@ def collate_vessels(batch: List[Vessel]) -> VesselBatch:
         tensor = torch.stack((ga_pos, ga_wss, ga_pressure))
 
         # padding to the right with max_size-vessel.pos.shape[0] elements
-        pad_value = -1  # hardcodato
         padding = (0, 0, 0, max_size - vessel.pos.shape[0])
         padded_tensor = F.pad(tensor, padding, "constant", pad_value)
         padded_data.append(padded_tensor)
