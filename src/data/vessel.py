@@ -9,8 +9,7 @@ class Vessel(Data):  # type: ignore[misc]
     """
     Data class for handling vessel data.
 
-    This class inherits from Data and is used to
-    handle vessel data.
+    This class inherits from Data and adds print utilities.
     """
 
     wss: Tensor = field(default_factory=Tensor)

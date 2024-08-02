@@ -1,30 +1,95 @@
+from typing import Dict
+
 import lightning as L
-import torch
 from torch import Tensor, nn, optim
 
 from config.dataclasses import BaselineConfig
+from src.models.layers.default.transformer import TransformerEncoder
 
 
-# TODO implement the BaselineTransformer
 class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
+    """
+    Baseline Transformer model for classification.
+
+    Args:
+        config (BaselineConfig): Configuration object
+                                 for setting model parameters.
+    """
+
     def __init__(self, config: BaselineConfig) -> None:
         super().__init__()
-        self.linear = nn.LazyLinear(out_features=1)
+        self.encoder = TransformerEncoder(
+            embed_dim=config.transformer_embedding_dim,
+            num_heads=config.transformer_num_heads,
+            feedforward_dim=config.transformer_feedforward_dim,
+            num_layers=config.transformer_num_layers,
+        )
+        self.projection = nn.Linear(config.transformer_embedding_dim, 1)
         self.config = config
+        self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:
-        x = x * mask.unsqueeze(-1)  # Apply mask to zero out padded values
-        x = self.linear(x)
-        return x
+        """
+        Forward pass through the model.
 
-    def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
-        loss = torch.zeros(1)
-        loss.requires_grad = True
-        return loss  # TODO
+        Args:
+            x (Tensor): Input tensor of shape
+                        (batch_size, seq_length, embed_dim).
+            mask (Tensor): Mask tensor of shape
+                           (batch_size, 1, seq_length, seq_length).
 
-    def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
-        self.log("val_loss", torch.zeros(1))
-        return torch.zeros(1)  # TODO
+        Returns:
+            Tensor: Output tensor with logits.
+        """
+        x = self.encoder(x, mask)
+        x = self.projection(x)
+        return x  # Logits are used directly for BCEWithLogitsLoss
+
+    def training_step(
+        self, batch: Dict[str, Tensor], batch_idx: int
+    ) -> Tensor:
+        """
+        Training step where the loss is computed.
+
+        Args:
+            batch (dict): A dictionary containing input tensors and targets.
+            batch_idx (int): Index of the batch.
+
+        Returns:
+            Tensor: Computed loss value.
+        """
+        x, y, mask = batch["x"], batch["y"], batch["mask"]
+        logits = self(x, mask)
+        loss = self.loss_fn(logits.squeeze(), y.float())
+        self.log(
+            "train_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+        )
+        return loss
+
+    def validation_step(
+        self, batch: Dict[str, Tensor], batch_idx: int
+    ) -> Tensor:
+        """
+        Validation step where the loss is computed.
+
+        Args:
+            batch (dict): A dictionary containing input tensors and targets.
+            batch_idx (int): Index of the batch.
+
+        Returns:
+            Tensor: Computed loss value.
+        """
+        x, y, mask = batch["x"], batch["y"], batch["mask"]
+        logits = self(x, mask)
+        loss = self.loss_fn(logits.squeeze(), y.float())
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        return loss
 
     def configure_optimizers(self) -> optim.Optimizer:
-        return optim.Adam(self.parameters(), lr=0.0001)  # TODO
+        """
+        Configure the optimizer.
+
+        Returns:
+            optim.Optimizer: The Adam optimizer.
+        """
+        return optim.Adam(self.parameters(), lr=self.config.learning_rate)

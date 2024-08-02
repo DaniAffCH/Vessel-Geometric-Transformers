@@ -92,9 +92,9 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
             collate_fn=collate_vessels,
         )
 
-    @classmethod
+    @staticmethod
     def random_split(
-        self, dataset: InMemoryDataset, ratios: List[float]
+        dataset: InMemoryDataset, ratios: List[float]
     ) -> List[InMemorySubset]:
         """
         Split the dataset into subsets based on the given ratios.

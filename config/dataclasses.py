@@ -25,6 +25,10 @@ class TrainerConfig:
 
 @dataclass
 class BaselineConfig:
+    transformer_embedding_dim: int = MISSING
+    transformer_num_heads: int = MISSING
+    transformer_feedforward_dim: int = MISSING
+    transformer_num_layers: int = MISSING
     learning_rate: float = MISSING
 
 
