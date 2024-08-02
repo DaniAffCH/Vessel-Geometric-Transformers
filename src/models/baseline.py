@@ -1,9 +1,8 @@
-from typing import Dict
-
 import lightning as L
 from torch import Tensor, nn, optim
 
 from config.dataclasses import BaselineConfig
+from src.data.datamodule import VesselBatch
 from src.models.layers.default.transformer import TransformerEncoder
 
 
@@ -45,9 +44,7 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         x = self.projection(x)
         return x  # Logits are used directly for BCEWithLogitsLoss
 
-    def training_step(
-        self, batch: Dict[str, Tensor], batch_idx: int
-    ) -> Tensor:
+    def training_step(self, batch: VesselBatch, batch_idx: int) -> Tensor:
         """
         Training step where the loss is computed.
 
@@ -58,17 +55,15 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         Returns:
             Tensor: Computed loss value.
         """
-        x, y, mask = batch["x"], batch["y"], batch["mask"]
-        logits = self(x, mask)
-        loss = self.loss_fn(logits.squeeze(), y.float())
+
+        logits = self(batch.data, batch.mask)
+        loss = self.loss_fn(logits.squeeze(), batch.labels)
         self.log(
             "train_loss", loss, on_step=True, on_epoch=True, prog_bar=True
         )
         return loss
 
-    def validation_step(
-        self, batch: Dict[str, Tensor], batch_idx: int
-    ) -> Tensor:
+    def validation_step(self, batch: VesselBatch, batch_idx: int) -> Tensor:
         """
         Validation step where the loss is computed.
 
@@ -79,9 +74,8 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         Returns:
             Tensor: Computed loss value.
         """
-        x, y, mask = batch["x"], batch["y"], batch["mask"]
-        logits = self(x, mask)
-        loss = self.loss_fn(logits.squeeze(), y.float())
+        logits = self(batch.data, batch.mask)
+        loss = self.loss_fn(logits.squeeze(), batch.labels)
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
