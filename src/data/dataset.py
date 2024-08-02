@@ -10,6 +10,7 @@ from torch_geometric.data import Data, InMemoryDataset
 
 from config import DatasetConfig
 from src.data.vessel import Vessel
+from src.utils.definitions import Category
 
 
 class VesselDataset(InMemoryDataset):  # type: ignore[misc]
@@ -118,7 +119,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             self.config.drive_url, output=self.config.download_path
         )
 
-    def get_data_from_h5(self, sample: h5py.Group) -> Data:
+    def get_data_from_h5(self, sample: h5py.Group, label: Category) -> Data:
         """
         Extract data from an HDF5 sample group and create a Data object.
 
@@ -135,9 +136,10 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             pressure=torch.from_numpy(sample["pressure"][()]),
             face=torch.from_numpy(sample["face"][()].T).long(),
             inlet_index=torch.from_numpy(sample["inlet_idcs"][()]),
+            label=label,
         )
 
-    def process_h5(self, h5_path: str) -> List[Data]:
+    def process_h5(self, h5_path: str, label: Category) -> List[Data]:
         """
         Process the HDF5 file and create a list of Data objects.
 
@@ -153,7 +155,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
                 assert (
                     len(f[sample_name].keys()) == 5
                 ), f"Corrupted sample found, {sample_name}"
-                data = self.get_data_from_h5(f[sample_name])
+                data = self.get_data_from_h5(f[sample_name], label)
                 data_list.append(data)
         return data_list
 
@@ -170,8 +172,11 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             self.raw_paths[0], self.config.single_path
         )
 
-        data_list.extend(self.process_h5(bifurcating_db_path))
-        data_list.extend(self.process_h5(single_db_path))
+        # per mo gli passo il label accoppiato al path
+        data_list.extend(
+            self.process_h5(bifurcating_db_path, Category.Bifurcating)
+        )
+        data_list.extend(self.process_h5(single_db_path, Category.Single))
 
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]

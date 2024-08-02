@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from torch import Tensor
 from torch_geometric.data import Data
 
+from src.utils.definitions import Category
+
 
 @dataclass
 class Vessel(Data):  # type: ignore[misc]
@@ -18,6 +20,7 @@ class Vessel(Data):  # type: ignore[misc]
     pressure: Tensor = field(default_factory=Tensor)
     face: Tensor = field(default_factory=Tensor)
     inlet_index: Tensor = field(default_factory=Tensor)
+    label: Category = field(default=Category.Single)
 
     def __repr__(self) -> str:
         return (
@@ -26,4 +29,5 @@ class Vessel(Data):  # type: ignore[misc]
             f"pressure={self.pressure.shape}, "
             f"face={self.face.shape}, "
             f"inlet_index={self.inlet_index.shape})"
+            f"label={self.label})"
         )
