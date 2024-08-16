@@ -53,7 +53,6 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         mask = mask.reshape(x.size(0), -1)
 
         x = self.encoder(x, mask)
-        print(x.shape)
         x = x.reshape(x.size(0), -1)
         x = self.projection(x)
 
@@ -90,7 +89,6 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
             Tensor: Computed loss value.
         """
         logits = self(batch.data, batch.mask)
-        print(logits.squeeze().shape, batch.labels.shape)
         loss = self.loss_fn(logits.squeeze(), batch.labels)
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         return loss

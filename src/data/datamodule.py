@@ -209,7 +209,7 @@ def collate_vessels(
     collated_batch = VesselBatch(
         data=torch.stack(padded_data),
         mask=torch.stack(masks),
-        labels=torch.tensor(labels),
+        labels=torch.tensor(labels, dtype=torch.float32),
     )
 
     return collated_batch

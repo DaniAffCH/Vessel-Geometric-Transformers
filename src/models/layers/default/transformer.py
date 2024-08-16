@@ -108,7 +108,6 @@ class MultiHeadAttentionLayer(nn.Module):  # type: ignore[misc]
             scores = scores.masked_fill(mask == 0, float("-inf"))
 
         attn_weights = torch.nn.functional.softmax(scores, dim=-1)
-        print(attn_weights.shape, value.shape)
         attn_output = torch.matmul(
             attn_weights, value
         )  # Shape: (batch_size, num_heads, seq_length, head_dim)
