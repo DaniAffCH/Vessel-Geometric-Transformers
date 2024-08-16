@@ -23,7 +23,13 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
             feedforward_dim=config.transformer_feedforward_dim,
             num_layers=config.transformer_num_layers,
         )
-        self.projection = nn.Linear(config.transformer_embedding_dim, 1)
+        SIZE_LIMIT = 100  # TODO: move to config
+
+        num_features = 4
+
+        self.projection = nn.Linear(
+            config.transformer_embedding_dim * SIZE_LIMIT * num_features, 1
+        )
         self.config = config
         self.loss_fn = nn.BCEWithLogitsLoss()
 
@@ -33,15 +39,24 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
 
         Args:
             x (Tensor): Input tensor of shape
-                        (batch_size, seq_length, embed_dim).
+                        (batch_size, num_elements, seq_length, ga_size).
             mask (Tensor): Mask tensor of shape
-                           (batch_size, 1, seq_length, seq_length).
+                           (batch_size, num_elements, seq_length).
 
         Returns:
             Tensor: Output tensor with logits.
         """
+        # (batch_size, num_elements*seq_length, ga_size)
+        x = x.reshape(x.size(0), -1, x.size(-1))
+
+        # (batch_size, num_elements*seq_length)
+        mask = mask.reshape(x.size(0), -1)
+
         x = self.encoder(x, mask)
+        print(x.shape)
+        x = x.reshape(x.size(0), -1)
         x = self.projection(x)
+
         return x  # Logits are used directly for BCEWithLogitsLoss
 
     def training_step(self, batch: VesselBatch, batch_idx: int) -> Tensor:
@@ -75,6 +90,7 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
             Tensor: Computed loss value.
         """
         logits = self(batch.data, batch.mask)
+        print(logits.squeeze().shape, batch.labels.shape)
         loss = self.loss_fn(logits.squeeze(), batch.labels)
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         return loss

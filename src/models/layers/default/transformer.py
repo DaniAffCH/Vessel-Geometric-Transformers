@@ -68,7 +68,7 @@ class MultiHeadAttentionLayer(nn.Module):  # type: ignore[misc]
             torch.Tensor: The output tensor after applying
                           multi-head attention.
         """
-        batch_size = query.size(0)
+        batch_size, seq_length = query.size(0), query.size(1)
 
         query = self.q_proj(
             query
@@ -88,17 +88,27 @@ class MultiHeadAttentionLayer(nn.Module):  # type: ignore[misc]
         value = value.view(
             batch_size, -1, self.num_heads, self.head_dim
         ).transpose(1, 2)
-
         # Compute scaled dot-product attention
         scores = (
             torch.matmul(query, key.transpose(-2, -1)) / self.head_dim**0.5
         )  # Shape: (batch_size, num_heads, seq_length, seq_length)
-
         if mask is not None:
+
+            # Shape: (batch_size, seq_length)
+            # -> (batch_size, seq_length, seq_length)
+            mask = mask.unsqueeze(1) * mask.unsqueeze(2)
+
+            # Shape: (batch_size, seq_length, seq_length)
+            # -> (batch_size, num_heads, seq_length, seq_length)
+            mask = mask.unsqueeze(1).expand(
+                batch_size, self.num_heads, seq_length, seq_length
+            )
+
             # If a token is masked the model shouldn't pay attention to it
             scores = scores.masked_fill(mask == 0, float("-inf"))
 
         attn_weights = torch.nn.functional.softmax(scores, dim=-1)
+        print(attn_weights.shape, value.shape)
         attn_output = torch.matmul(
             attn_weights, value
         )  # Shape: (batch_size, num_heads, seq_length, head_dim)
@@ -109,7 +119,6 @@ class MultiHeadAttentionLayer(nn.Module):  # type: ignore[misc]
             .contiguous()
             .view(batch_size, -1, self.embed_dim)
         )
-
         output = self.out_proj(attn_output)
 
         return output
@@ -151,7 +160,7 @@ class TransformerEncoderLayer(nn.Module):  # type: ignore[misc]
             x (torch.Tensor): The input tensor of shape
                               (batch_size, seq_length, embed_dim).
             mask (torch.Tensor, optional): The attention mask tensor of shape
-                                    (batch_size, 1, seq_length, seq_length).
+                                    (batch_size, seq_length).
                                     Default is None.
 
         Returns:

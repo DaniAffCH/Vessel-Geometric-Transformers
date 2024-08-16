@@ -13,6 +13,7 @@ from config.dataclasses import DatasetConfig
 from src.data.dataset import VesselDataset
 from src.data.vessel import Vessel
 from src.lib import (
+    PlaneGeometricAlgebra,
     PointGeometricAlgebra,
     ScalarGeometricAlgebra,
     TranslationGeometricAlgebra,
@@ -137,51 +138,78 @@ class VesselBatch:
     labels: Tensor = field(default_factory=Tensor)
 
 
-def collate_vessels(batch: List[Vessel]) -> VesselBatch:
+def collate_vessels(
+    batch: List[Vessel], pad_value: int = -9999999
+) -> VesselBatch:
     """
     Collates a batch of Vessel objects into padded tensors.
 
     Args:
         batch (List[Vessel]): A list of Vessel objects.
+        pad_value (int): The value used to indicate padding
 
     Returns:
-        Tuple[Tensor, Tensor]: A tuple containing the padded batch tensor
-        and the corresponding masks tensor.
+        VesselBatch: A VesselBatch object containing the padded batch tensor,
+        masks tensor, and labels tensor.
     """
 
     elem: Vessel = batch[0]
     assert isinstance(elem, (Vessel, Data)), "DataLoader found invalid type"
-    pad_value = -1
 
-    max_size = max(vessel.pos.shape[0] for vessel in batch)
+    SIZE_LIMIT = 100  # TODO: move to config
+
     padded_data: List[Tensor] = []
     masks: List[Tensor] = []
+    labels: List[int] = []
 
     for vessel in batch:
-        # normalizing to be within 0 and 1
+        # Normalizing the vessel data
         wss = normalize(vessel.wss)
         pos = normalize(vessel.pos)
         pressure = normalize(vessel.pressure)
+        face = normalize(vessel.face.T)
 
-        # extracing the geometric algebra elements
-        ga_wss = TranslationGeometricAlgebra.fromElement(wss)
-        ga_pos = PointGeometricAlgebra.fromElement(pos)
-        ga_pressure = ScalarGeometricAlgebra.fromElement(pressure)
-        tensor = torch.stack((ga_pos, ga_wss, ga_pressure))
+        # Extracting the geometric algebra elements
+        ga_elements = [
+            TranslationGeometricAlgebra.fromElement(wss),
+            PointGeometricAlgebra.fromElement(pos),
+            ScalarGeometricAlgebra.fromElement(pressure),
+            PlaneGeometricAlgebra.fromElement(face),
+        ]
 
-        # padding to the right with max_size-vessel.pos.shape[0] elements
-        padding = (0, 0, 0, max_size - vessel.pos.shape[0])
-        padded_tensor = F.pad(tensor, padding, "constant", pad_value)
-        padded_data.append(padded_tensor)
+        ga_elements = [
+            (
+                F.pad(
+                    tensor,
+                    (0, 0, 0, SIZE_LIMIT - tensor.size(0)),
+                    "constant",
+                    pad_value,
+                )
+                if tensor.size(0) < SIZE_LIMIT
+                else tensor[:SIZE_LIMIT]
+            )
+            for tensor in ga_elements
+        ]
 
-        # Mask: 1 for real data, 0 for padded data
-        mask = (padded_tensor != pad_value).float()
+        # Construct the tensor by stacking geometric algebra elements
+        tensor = torch.stack(ga_elements)
+
+        # Append the padded tensor to the padded_data list
+        padded_data.append(tensor)
+
+        # Create a mask tensor: 1 for real data, 0 for padded data
+        mask = (tensor != pad_value).float()
+        mask = mask[..., 0]
         masks.append(mask)
 
+        # Store the label of the vessel
+        labels.append(vessel.label.value)
+
+    # Stack the padded tensors, masks, and labels into batch tensors
     collated_batch = VesselBatch(
         data=torch.stack(padded_data),
         mask=torch.stack(masks),
-        labels=torch.tensor([vessel.label.value for vessel in batch]),
+        labels=torch.tensor(labels),
     )
 
     return collated_batch
