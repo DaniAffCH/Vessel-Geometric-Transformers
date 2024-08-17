@@ -77,21 +77,28 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
         return DataLoader(
             self.train_set,
             batch_size=self.config.batch_size,
-            collate_fn=collate_vessels,
+            collate_fn=lambda batch: collate_vessels(
+                batch, self.config.features_size_limit
+            ),
+            shuffle=True,
         )
 
     def val_dataloader(self) -> GeometricDataLoader:
         return DataLoader(
             self.val_set,
             batch_size=self.config.batch_size,
-            collate_fn=collate_vessels,
+            collate_fn=lambda batch: collate_vessels(
+                batch, self.config.features_size_limit
+            ),
         )
 
     def test_dataloader(self) -> GeometricDataLoader:
         return DataLoader(
             self.test_set,
             batch_size=self.config.batch_size,
-            collate_fn=collate_vessels,
+            collate_fn=lambda batch: collate_vessels(
+                batch, self.config.features_size_limit
+            ),
         )
 
     @staticmethod
@@ -139,13 +146,14 @@ class VesselBatch:
 
 
 def collate_vessels(
-    batch: List[Vessel], pad_value: int = -9999999
+    batch: List[Vessel], size_limit: int, pad_value: int = -0xDEADBEEF
 ) -> VesselBatch:
     """
     Collates a batch of Vessel objects into padded tensors.
 
     Args:
         batch (List[Vessel]): A list of Vessel objects.
+        size_limit (int): Maximum number of elements a feature can have
         pad_value (int): The value used to indicate padding
 
     Returns:
@@ -155,8 +163,6 @@ def collate_vessels(
 
     elem: Vessel = batch[0]
     assert isinstance(elem, (Vessel, Data)), "DataLoader found invalid type"
-
-    SIZE_LIMIT = 100  # TODO: move to config
 
     padded_data: List[Tensor] = []
     masks: List[Tensor] = []
@@ -181,12 +187,12 @@ def collate_vessels(
             (
                 F.pad(
                     tensor,
-                    (0, 0, 0, SIZE_LIMIT - tensor.size(0)),
+                    (0, 0, 0, size_limit - tensor.size(0)),
                     "constant",
                     pad_value,
                 )
-                if tensor.size(0) < SIZE_LIMIT
-                else tensor[:SIZE_LIMIT]
+                if tensor.size(0) < size_limit
+                else tensor[:size_limit]
             )
             for tensor in ga_elements
         ]

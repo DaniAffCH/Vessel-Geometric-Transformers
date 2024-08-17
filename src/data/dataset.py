@@ -1,4 +1,5 @@
 import os
+import random
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -161,7 +162,8 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
     def process(self) -> None:
         """
-        Process the raw data files and save the processed data.
+        Process the raw data files, shuffle the data,
+        and save the processed data.
         """
         data_list = []
 
@@ -181,6 +183,10 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
         if self.pre_transform is not None:
             data_list = [self.pre_transform(data) for data in data_list]
+
+        # Shuffle the data list
+        random.seed(42)
+        random.shuffle(data_list)
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])

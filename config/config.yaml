@@ -8,15 +8,20 @@ dataset:
   val_size: 0.15
   test_size: 0.1
   batch_size: 4
+  features_size_limit: 300
 
 baseline:
   transformer_embedding_dim: 16
   transformer_num_heads: 4
-  transformer_feedforward_dim: 32
-  transformer_num_layers: 2
+  transformer_feedforward_dim: 16
+  transformer_num_layers: 1
   learning_rate: 0.001
+  features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 trainer:
   max_epochs: 100
-  patience: 10
+  patience: 3
   ckpt_path: "ckpt"
+  wandb_project: "Vessel-Geometric-Transformers"
+  min_delta: 0.001
+  resume_training: False

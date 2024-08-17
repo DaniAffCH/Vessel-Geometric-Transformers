@@ -1,8 +1,11 @@
 import lightning as L
+import torch
 from torch import Tensor, nn, optim
+from torchmetrics.classification import BinaryAccuracy, BinaryF1Score
 
 from config.dataclasses import BaselineConfig
 from src.data.datamodule import VesselBatch
+from src.lib.geometricAlgebra import GeometricAlgebraBase
 from src.models.layers.default.transformer import TransformerEncoder
 
 
@@ -23,15 +26,33 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
             feedforward_dim=config.transformer_feedforward_dim,
             num_layers=config.transformer_num_layers,
         )
-        SIZE_LIMIT = 100  # TODO: move to config
 
         num_features = 4
 
+        self.embedder = nn.Linear(
+            GeometricAlgebraBase.GA_size, config.transformer_embedding_dim
+        )
+
         self.projection = nn.Linear(
-            config.transformer_embedding_dim * SIZE_LIMIT * num_features, 1
+            config.transformer_embedding_dim
+            * config.features_size_limit
+            * num_features,
+            1,
         )
         self.config = config
         self.loss_fn = nn.BCEWithLogitsLoss()
+
+        # Initialize metrics
+        self.train_accuracy = BinaryAccuracy()
+        self.val_accuracy = BinaryAccuracy()
+        self.test_accuracy = BinaryAccuracy()
+
+        self.train_f1 = BinaryF1Score()
+        self.val_f1 = BinaryF1Score()
+        self.test_f1 = BinaryF1Score()
+
+        # Enabling fp16 precision to increase performance in Daniele's GPU ;)
+        torch.set_float32_matmul_precision("medium")
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:
         """
@@ -52,8 +73,11 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         # (batch_size, num_elements*seq_length)
         mask = mask.reshape(x.size(0), -1)
 
+        x = self.embedder(x)
         x = self.encoder(x, mask)
+
         x = x.reshape(x.size(0), -1)
+
         x = self.projection(x)
 
         return x  # Logits are used directly for BCEWithLogitsLoss
@@ -69,12 +93,32 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         Returns:
             Tensor: Computed loss value.
         """
-
         logits = self(batch.data, batch.mask)
-        loss = self.loss_fn(logits.squeeze(), batch.labels)
+        logits = logits.squeeze(-1)
+        loss = self.loss_fn(logits, batch.labels)
+
+        preds = logits.sigmoid() > 0.5  # Convert logits to binary predictions
+        self.train_accuracy(preds, batch.labels)
+        self.train_f1(preds, batch.labels)
+
         self.log(
-            "train_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+            "train/loss", loss, on_step=False, on_epoch=True, prog_bar=True
         )
+        self.log(
+            "train/acc",
+            self.train_accuracy,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        self.log(
+            "train/f1",
+            self.train_f1,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+
         return loss
 
     def validation_step(self, batch: VesselBatch, batch_idx: int) -> Tensor:
@@ -89,8 +133,65 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
             Tensor: Computed loss value.
         """
         logits = self(batch.data, batch.mask)
-        loss = self.loss_fn(logits.squeeze(), batch.labels)
-        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        logits = logits.squeeze(-1)
+        loss = self.loss_fn(logits, batch.labels)
+
+        preds = logits.sigmoid() > 0.5
+        self.val_accuracy(preds, batch.labels)
+        self.val_f1(preds, batch.labels)
+
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(
+            "val/acc",
+            self.val_accuracy,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        self.log(
+            "val/f1", self.val_f1, on_step=False, on_epoch=True, prog_bar=True
+        )
+
+        return loss
+
+    def test_step(self, batch: VesselBatch, batch_idx: int) -> Tensor:
+        """
+        Test step where the loss is computed.
+
+        Args:
+            batch (dict): A dictionary containing input tensors and targets.
+            batch_idx (int): Index of the batch.
+
+        Returns:
+            Tensor: Computed loss value.
+        """
+        logits = self(batch.data, batch.mask)
+        logits = logits.squeeze(-1)
+
+        loss = self.loss_fn(logits, batch.labels)
+
+        preds = logits.sigmoid() > 0.5
+        self.test_accuracy(preds, batch.labels)
+        self.test_f1(preds, batch.labels)
+
+        self.log(
+            "test/loss", loss, on_step=False, on_epoch=True, prog_bar=True
+        )
+        self.log(
+            "test/acc",
+            self.test_accuracy,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        self.log(
+            "test/f1",
+            self.test_f1,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+
         return loss
 
     def configure_optimizers(self) -> optim.Optimizer:

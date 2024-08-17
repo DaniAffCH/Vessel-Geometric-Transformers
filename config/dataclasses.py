@@ -14,6 +14,7 @@ class DatasetConfig:
     val_size: float = MISSING
     test_size: float = MISSING
     batch_size: int = MISSING
+    features_size_limit: int = MISSING
 
 
 @dataclass
@@ -21,6 +22,9 @@ class TrainerConfig:
     max_epochs: int = MISSING
     patience: int = MISSING
     ckpt_path: str = MISSING
+    wandb_project: str = MISSING
+    min_delta: float = MISSING
+    resume_training: bool = MISSING
 
 
 @dataclass
@@ -30,6 +34,7 @@ class BaselineConfig:
     transformer_feedforward_dim: int = MISSING
     transformer_num_layers: int = MISSING
     learning_rate: float = MISSING
+    features_size_limit: int = MISSING
 
 
 @dataclass
