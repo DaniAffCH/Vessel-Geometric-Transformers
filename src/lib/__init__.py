@@ -1,4 +1,4 @@
-from .geometricAlgebra import (
+from .geometricAlgebraElements import (
     PlaneGeometricAlgebra,
     PointGeometricAlgebra,
     ScalarGeometricAlgebra,

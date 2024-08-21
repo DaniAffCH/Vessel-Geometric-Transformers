@@ -5,7 +5,7 @@ from torchmetrics.classification import BinaryAccuracy, BinaryF1Score
 
 from config.dataclasses import BaselineConfig
 from src.data.datamodule import VesselBatch
-from src.lib.geometricAlgebra import GeometricAlgebraBase
+from src.lib.geometricAlgebraElements import GeometricAlgebraBase
 from src.models.layers.default.transformer import TransformerEncoder
 
 
