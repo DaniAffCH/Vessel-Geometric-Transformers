@@ -16,5 +16,3 @@ pyyaml
 types-PyYAML
 types-tqdm
 wandb
-clifford
-numba==0.58.1

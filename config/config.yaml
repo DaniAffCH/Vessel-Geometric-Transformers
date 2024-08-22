@@ -18,6 +18,11 @@ baseline:
   learning_rate: 0.001
   features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
+gatr:
+  hidden_size: 1000
+  learning_rate: 0.001
+  features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
+
 trainer:
   max_epochs: 100
   patience: 3

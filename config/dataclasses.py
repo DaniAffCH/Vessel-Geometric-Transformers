@@ -39,7 +39,9 @@ class BaselineConfig:
 
 @dataclass
 class GatrConfig:
+    hidden_size: int = MISSING
     learning_rate: float = MISSING
+    features_size_limit: int = MISSING
 
 
 @dataclass

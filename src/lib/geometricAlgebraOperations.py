@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from typing import Any
 
-import clifford as cf
 import torch
+from torch._prims_common import DeviceLikeType
 from typing_extensions import override
-
-from src.lib.geometricAlgebraElements import GeometricAlgebraBase
 
 # TODO: Probabilmente non va bene usare una lib esterna perchè
 # le operazioni non sono differenziabili.
@@ -15,27 +14,66 @@ from src.lib.geometricAlgebraElements import GeometricAlgebraBase
 
 class GeometricOperation(ABC):
 
-    # G_{3,0,1} algebra
-    layout, blades = cf.Cl(3, 0, 1)
-
-    @staticmethod
-    def _generateMultivector(x: torch.Tensor) -> cf._multivector.MultiVector:
-        assert x.ndim == 1, "Expected monodimensional vector"
-        assert (
-            x.shape[0] == GeometricAlgebraBase.GA_size
-        ), f"Expected vector to have {GeometricAlgebraBase.GA_size} elements, \
-            {x.shape[0]} given"
-
-        basis = GeometricOperation.blades.values()
-
-        return sum(c * b for c, b in zip(x, basis))
-
     @staticmethod
     @abstractmethod
     def apply(*args: Any) -> torch.Tensor:
         pass
 
 
+class Blade(GeometricOperation):
+
+    # This function always compute the same matrix.
+    # Using a lru cache to avoid repeated computations
+    @lru_cache(maxsize=1)
+    @staticmethod
+    def getEquiLinBasis(
+        device: DeviceLikeType = torch.device("cpu"),
+    ) -> torch.Tensor:
+
+        # Tuples represent range
+        # Grade projection
+        diag_range = [(0, 1), (1, 5), (5, 11), (11, 15), (15, 16)]
+
+        # Tuples represent indices
+        # homogeneous basis vector e0
+        additional_idx = [
+            [(1, 0)],
+            [(5, 2), (6, 3), (7, 4)],
+            [(11, 8), (12, 9), (13, 10)],
+            [(15, 14)],
+        ]
+
+        b = []
+
+        for start, end in diag_range:
+            m = torch.zeros((16, 16))
+            m[start:end, start:end] = torch.eye(end - start)
+            b.append(m)
+
+        for el in additional_idx:
+            m = torch.zeros((16, 16))
+            indices = torch.tensor(el).t()
+            m[indices[0], indices[1]] = 1
+            b.append(m)
+
+        basis = torch.stack(b)
+
+        return basis.to(device=device, dtype=torch.float32)
+
+    @override
+    @staticmethod
+    def apply(x: torch.Tensor, grade: int) -> torch.Tensor:
+        assert grade < 4, (
+            f"grade {grade} out of range for algebra "
+            + "G_{3,0,1} (max grade 3)"
+        )
+        op = Blade.getEquiLinBasis(x)
+        op = op[grade]
+        op = torch.sum(op, dim=1)
+        return op * x
+
+
+"""
 class GeometricProduct(GeometricOperation):
     @override
     @staticmethod
@@ -89,3 +127,4 @@ class SandwichProduct(GeometricOperation):
     def apply(x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         # TODO
         raise NotImplementedError()
+"""
