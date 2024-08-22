@@ -73,6 +73,45 @@ class Blade(GeometricOperation):
         return op * x
 
 
+class GeometricProduct(GeometricOperation):
+
+    # This function always retrieve the same matrix.
+    # Using a lru cache to avoid repeated computations
+    @lru_cache(maxsize=1)
+    @staticmethod
+    def getBiLinBasis(
+        device: DeviceLikeType = torch.device("cpu"),
+    ) -> torch.Tensor:
+        # This file of precomputed basis was taken from
+        # https://github.com/Qualcomm-AI-research/geometric-algebra-transformer/blob/main/gatr/primitives/data/geometric_product.pt
+        basis = torch.load("data/geometric_product.pt")
+        basis = basis.to_dense()
+        basis = basis.to(device=device, dtype=torch.float32)
+        return basis
+
+    @override
+    @staticmethod
+    def apply(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        basis = GeometricProduct.getBiLinBasis()
+        return torch.einsum("ijk, ...j, ...k -> ...i", basis, x, y)
+
+
+class OuterProduct(GeometricProduct):
+    # This function always retrieve the same matrix.
+    # Using a lru cache to avoid repeated computations
+    @lru_cache(maxsize=1)
+    @staticmethod
+    def getBiLinBasis(
+        device: DeviceLikeType = torch.device("cpu"),
+    ) -> torch.Tensor:
+        # This file of precomputed basis was taken from
+        # https://github.com/Qualcomm-AI-research/geometric-algebra-transformer/blob/main/gatr/primitives/data/outer_product.pt
+        basis = torch.load("data/outer_product.pt")
+        basis = basis.to_dense()
+        basis = basis.to(device=device, dtype=torch.float32)
+        return basis
+
+
 """
 class GeometricProduct(GeometricOperation):
     @override
