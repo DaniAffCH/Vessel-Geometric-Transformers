@@ -12,7 +12,7 @@ class EquiLinearLayer(nn.Module):  # type:ignore[misc]
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
-        self.equiLinBasis = Blade.getEquiLinBasis(self.device)
+        self.equiLinBasis = Blade.getEquiLinBasis()
 
         self.weights = nn.Parameter(
             torch.rand(

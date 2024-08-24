@@ -5,7 +5,8 @@ from torchmetrics.classification import BinaryAccuracy, BinaryF1Score
 
 from config.dataclasses import GatrConfig
 from src.data.datamodule import VesselBatch
-from src.models.layers.geometric.equiLinear import EquiLinearLayer
+from src.lib.geometricAlgebraElements import GeometricAlgebraBase
+from src.models.layers.geometric import EquiLinearLayer, GATrBlock
 
 
 class Gatr(L.LightningModule):  # type: ignore[misc]
@@ -18,11 +19,22 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
     """
 
     def __init__(self, config: GatrConfig) -> None:
-        super().__init__()
+        super(Gatr, self).__init__()
 
-        self.equilinear = EquiLinearLayer(
+        self.hsProjection = EquiLinearLayer(
             config.features_size_limit * 4, config.hidden_size
         )
+
+        self.backbone = nn.ModuleList(
+            [
+                GATrBlock(config.hidden_size)
+                for _ in range(config.num_backbone_layers)
+            ]
+        )
+
+        self.outputProjection = EquiLinearLayer(config.hidden_size, 1)
+
+        self.finalProjection = nn.Linear(GeometricAlgebraBase.GA_size, 1)
 
         self.config = config
         self.loss_fn = nn.BCEWithLogitsLoss()
@@ -38,6 +50,11 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
 
         # Enabling fp16 precision to increase performance in Daniele's GPU ;)
         torch.set_float32_matmul_precision("medium")
+
+    def getReference(self, x: Tensor) -> torch.Tensor:
+        # shape (batch, 1, ..., 1, 16)
+        dim = tuple(range(1, len(x.shape) - 1))
+        return torch.mean(x, dim=dim, keepdim=True)
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:
         """
@@ -58,9 +75,16 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
         # (batch_size, num_elements*seq_length)
         mask = mask.reshape(x.size(0), -1)
 
-        print(x.shape)
-        x = self.equilinear(x)
-        print(x.shape)
+        reference = self.getReference(x)
+
+        x = self.hsProjection(x)
+
+        for layer in self.backbone:
+            x = layer(x, reference)
+
+        x = self.outputProjection(x)
+        x = x.reshape(x.shape[0], -1)
+        x = self.finalProjection(x)
 
         return x  # Logits are used directly for BCEWithLogitsLoss
 

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import torch
-from torch._prims_common import DeviceLikeType
 from typing_extensions import override
 
 # TODO: Probabilmente non va bene usare una lib esterna perchè
@@ -26,12 +26,11 @@ class Blade(GeometricOperation):
     # Using a lru cache to avoid repeated computations
     @lru_cache(maxsize=1)
     @staticmethod
-    def getEquiLinBasis(
-        device: DeviceLikeType = torch.device("cpu"),
-    ) -> torch.Tensor:
+    def getEquiLinBasis() -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Tuples represent range
-        # Grade projection
+        # Grade projection (i.e. diagonal)
         diag_range = [(0, 1), (1, 5), (5, 11), (11, 15), (15, 16)]
 
         # Tuples represent indices
@@ -67,7 +66,7 @@ class Blade(GeometricOperation):
             f"grade {grade} out of range for algebra "
             + "G_{3,0,1} (max grade 3)"
         )
-        op = Blade.getEquiLinBasis(x)
+        op = Blade.getEquiLinBasis()
         op = op[grade]
         op = torch.sum(op, dim=1)
         return op * x
@@ -79,12 +78,15 @@ class GeometricProduct(GeometricOperation):
     # Using a lru cache to avoid repeated computations
     @lru_cache(maxsize=1)
     @staticmethod
-    def getBiLinBasis(
-        device: DeviceLikeType = torch.device("cpu"),
-    ) -> torch.Tensor:
+    def getBiLinBasis() -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # This file of precomputed basis was taken from
         # https://github.com/Qualcomm-AI-research/geometric-algebra-transformer/blob/main/gatr/primitives/data/geometric_product.pt
-        basis = torch.load("data/geometric_product.pt")
+        BILIN_PATH = (
+            Path(__file__).resolve().parent
+            / "precomputed/geometric_product.pt"
+        )
+        basis = torch.load(BILIN_PATH)
         basis = basis.to_dense()
         basis = basis.to(device=device, dtype=torch.float32)
         return basis
@@ -101,28 +103,78 @@ class OuterProduct(GeometricProduct):
     # Using a lru cache to avoid repeated computations
     @lru_cache(maxsize=1)
     @staticmethod
-    def getBiLinBasis(
-        device: DeviceLikeType = torch.device("cpu"),
-    ) -> torch.Tensor:
+    def getBiLinBasis() -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # This file of precomputed basis was taken from
         # https://github.com/Qualcomm-AI-research/geometric-algebra-transformer/blob/main/gatr/primitives/data/outer_product.pt
-        basis = torch.load("data/outer_product.pt")
+        BILIN_PATH = (
+            Path(__file__).resolve().parent / "precomputed/outer_product.pt"
+        )
+        basis = torch.load(BILIN_PATH)
         basis = basis.to_dense()
         basis = basis.to(device=device, dtype=torch.float32)
         return basis
 
 
-"""
-class GeometricProduct(GeometricOperation):
+class InnerProduct(GeometricOperation):
+    @staticmethod
+    def getBasisIndices() -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # keep only elements which don't contain basis e0
+        return torch.tensor(
+            [0, 2, 3, 4, 8, 9, 10, 14], dtype=torch.int, device=device
+        )
+
     @override
     @staticmethod
     def apply(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        x_mv = GeometricProduct._generateMultivector(x)
-        y_mv = GeometricProduct._generateMultivector(y)
+        idxs = InnerProduct.getBasisIndices()
+        x = x[..., idxs]
+        y = y[..., idxs]
 
-        return torch.Tensor(x_mv * y_mv)
+        # dot product
+        return torch.sum(x * y, dim=-1)
 
 
+class Dual(GeometricOperation):
+    @override
+    @staticmethod
+    def apply(x: torch.Tensor) -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Needed to fix orintation
+        # From table 4 of https://geometricalgebra.org/downloads/PGA4CS.pdf
+        factors = torch.tensor(
+            [1, -1, 1, -1, 1, 1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1],
+            dtype=torch.int,
+            device=device,
+        )
+        return factors * x.flip(-1)
+
+
+class Join(GeometricOperation):
+    @override
+    @staticmethod
+    def apply(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        # (x* ∧ y*)*
+        xStar = Dual.apply(x)
+        yStar = Dual.apply(y)
+        product = OuterProduct.apply(xStar, yStar)
+        join = Dual.apply(product)
+        return join
+
+
+class EquivariantJoin(GeometricOperation):
+    @override
+    @staticmethod
+    def apply(
+        x: torch.Tensor, y: torch.Tensor, z: torch.Tensor
+    ) -> torch.Tensor:
+        # z0123 (x* ∧ y*)*
+        return z[..., [-1]] * Join.apply(x, y)
+
+
+"""
 class InnerProduct(GeometricOperation):
     @override
     @staticmethod
@@ -131,34 +183,6 @@ class InnerProduct(GeometricOperation):
         y_mv = InnerProduct._generateMultivector(y)
 
         return torch.Tensor(x_mv | y_mv)
-
-
-class OuterProduct(GeometricOperation):
-    @override
-    @staticmethod
-    def apply(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        x_mv = OuterProduct._generateMultivector(x)
-        y_mv = OuterProduct._generateMultivector(y)
-
-        return torch.Tensor(x_mv ^ y_mv)
-
-
-class Dual(GeometricOperation):
-    @override
-    @staticmethod
-    def apply(x: torch.Tensor) -> torch.Tensor:
-        x_mv = Dual._generateMultivector(x)
-
-        return torch.Tensor(x_mv.dual())
-
-
-class Blade(GeometricOperation):
-    @override
-    @staticmethod
-    def apply(x: torch.Tensor, grade: int) -> torch.Tensor:
-        x_mv = Blade._generateMultivector(x)
-        return torch.Tensor(x_mv(grade))
-
 
 class SandwichProduct(GeometricOperation):
     @override
