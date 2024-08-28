@@ -48,7 +48,7 @@ class MultiHeadAttentionLayer(nn.Module):  # type: ignore[misc]
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        mask: torch.Tensor = None,
+        mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Forward pass for the multi-head attention layer.

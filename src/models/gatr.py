@@ -27,7 +27,7 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
 
         self.backbone = nn.ModuleList(
             [
-                GATrBlock(config.hidden_size)
+                GATrBlock(config.hidden_size, config.num_attention_heads)
                 for _ in range(config.num_backbone_layers)
             ]
         )

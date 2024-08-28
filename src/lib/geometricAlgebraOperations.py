@@ -6,11 +6,6 @@ from typing import Any
 import torch
 from typing_extensions import override
 
-# TODO: Probabilmente non va bene usare una lib esterna perchè
-# le operazioni non sono differenziabili.
-# TODO: cambiare almeno le operazioni usate all'interno
-# dei layers
-
 
 class GeometricOperation(ABC):
 
@@ -175,15 +170,6 @@ class EquivariantJoin(GeometricOperation):
 
 
 """
-class InnerProduct(GeometricOperation):
-    @override
-    @staticmethod
-    def apply(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        x_mv = InnerProduct._generateMultivector(x)
-        y_mv = InnerProduct._generateMultivector(y)
-
-        return torch.Tensor(x_mv | y_mv)
-
 class SandwichProduct(GeometricOperation):
     @override
     @staticmethod

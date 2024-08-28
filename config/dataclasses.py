@@ -41,6 +41,7 @@ class BaselineConfig:
 class GatrConfig:
     hidden_size: int = MISSING
     num_backbone_layers: int = MISSING
+    num_attention_heads: int = MISSING
     learning_rate: float = MISSING
     features_size_limit: int = MISSING
 

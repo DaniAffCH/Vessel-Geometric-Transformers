@@ -12,13 +12,13 @@ from .geometricAttention import GeometricAttentionLayer
 
 
 class GATrBlock(nn.Module):  # type:ignore[misc]
-    def __init__(self, hidden_size: int) -> None:
+    def __init__(self, hidden_size: int, num_attention_heads: int) -> None:
         super(GATrBlock, self).__init__()
 
         self.branch1 = nn.Sequential(
             EquiNormLayer(),
             EquiLinearLayer(hidden_size, hidden_size),
-            GeometricAttentionLayer(),
+            GeometricAttentionLayer(hidden_size, num_attention_heads),
             EquiLinearLayer(hidden_size, hidden_size),
         )
 
