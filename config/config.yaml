@@ -22,6 +22,7 @@ gatr:
   hidden_size: 16
   num_backbone_layers: 2
   learning_rate: 0.001
+  num_attention_heads: 2
   features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 trainer:
