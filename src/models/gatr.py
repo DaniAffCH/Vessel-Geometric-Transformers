@@ -22,7 +22,7 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
         super(Gatr, self).__init__()
 
         self.hsProjection = EquiLinearLayer(
-            config.features_size_limit * 4, config.hidden_size
+            config.features_size_limit, config.hidden_size
         )
 
         self.backbone = nn.ModuleList(
@@ -34,7 +34,7 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
 
         self.outputProjection = EquiLinearLayer(config.hidden_size, 1)
 
-        self.finalProjection = nn.Linear(GeometricAlgebraBase.GA_size, 1)
+        self.finalProjection = nn.Linear(4 * GeometricAlgebraBase.GA_size, 1)
 
         self.config = config
         self.loss_fn = nn.BCEWithLogitsLoss()
@@ -70,10 +70,10 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
             Tensor: Output tensor with logits.
         """
         # (batch_size, num_elements*seq_length, ga_size)
-        x = x.reshape(x.size(0), -1, x.size(-1))
+        # x = x.reshape(x.size(0), -1, x.size(-1))
 
         # (batch_size, num_elements*seq_length)
-        mask = mask.reshape(x.size(0), -1)
+        # mask = mask.reshape(x.size(0), -1)
 
         reference = self.getReference(x)
 
@@ -83,7 +83,9 @@ class Gatr(L.LightningModule):  # type: ignore[misc]
             x = layer(x, reference)
 
         x = self.outputProjection(x)
+
         x = x.reshape(x.shape[0], -1)
+
         x = self.finalProjection(x)
 
         return x  # Logits are used directly for BCEWithLogitsLoss

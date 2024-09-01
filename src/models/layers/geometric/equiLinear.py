@@ -15,13 +15,12 @@ class EquiLinearLayer(nn.Module):  # type:ignore[misc]
         self.equiLinBasis = Blade.getEquiLinBasis()
 
         self.weights = nn.Parameter(
-            torch.rand(
-                outputFeatures,
-                inputFeatures,
-                self.equiLinBasis.shape[0],
+            torch.empty(
+                (outputFeatures, inputFeatures, self.equiLinBasis.shape[0]),
                 device=self.device,
             )
         )
+        nn.init.xavier_uniform_(self.weights)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

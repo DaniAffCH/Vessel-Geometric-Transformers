@@ -29,12 +29,13 @@ class Blade(GeometricOperation):
         diag_range = [(0, 1), (1, 5), (5, 11), (11, 15), (15, 16)]
 
         # Tuples represent indices
-        # homogeneous basis vector e0
+        # homogeneous basis vector * e0
+        # [e0 | 0 e0e1 e0e2 e0e3 | 0 0 0 e012 e013 e023 | 0 0 0 e123 | 0]
         additional_idx = [
-            [(1, 0)],
-            [(5, 2), (6, 3), (7, 4)],
-            [(11, 8), (12, 9), (13, 10)],
-            [(15, 14)],
+            [(1, 0)],  # e0
+            [(5, 2), (6, 3), (7, 4)],  # e0e1 e0e2 e0e3
+            [(11, 8), (12, 9), (13, 10)],  # e012 e013 e023
+            [(15, 14)],  # e123
         ]
 
         b = []
