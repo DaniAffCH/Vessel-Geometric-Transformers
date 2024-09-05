@@ -5,6 +5,7 @@ from torchmetrics.classification import BinaryAccuracy, BinaryF1Score
 
 from config.dataclasses import BaselineConfig
 from src.data.datamodule import VesselBatch
+from src.data.dataset import NUM_FEATURES
 from src.lib.geometricAlgebraElements import GeometricAlgebraBase
 from src.models.layers.default.transformer import TransformerEncoder
 
@@ -27,8 +28,6 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
             num_layers=config.transformer_num_layers,
         )
 
-        num_features = 4
-
         self.embedder = nn.Linear(
             GeometricAlgebraBase.GA_size, config.transformer_embedding_dim
         )
@@ -36,7 +35,7 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         self.projection = nn.Linear(
             config.transformer_embedding_dim
             * config.features_size_limit
-            * num_features,
+            * NUM_FEATURES,
             1,
         )
         self.config = config

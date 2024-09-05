@@ -17,10 +17,11 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
             project=config.wandb_project,
         )
 
-        checkpoint_callback = ModelCheckpoint(
+        self._checkpoint_callback = ModelCheckpoint(
             monitor="val/loss",
             dirpath=config.ckpt_path,
-            save_last=True,  # Keep track of the model at the last epoch
+            save_top_k=1,
+            mode="min",
             verbose=True,
         )
 
@@ -33,7 +34,7 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
 
         super().__init__(
             max_epochs=config.max_epochs,
-            callbacks=[checkpoint_callback, early_stopping_callback],
+            callbacks=[self._checkpoint_callback, early_stopping_callback],
             logger=WandbLogger(),
         )
 
@@ -58,8 +59,16 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
         self, model: L.LightningModule, datamodule: L.LightningDataModule
     ) -> None:
         """Test the model on the test set."""
+        best_ckpt_path = self._checkpoint_callback.best_model_path
+
+        if not best_ckpt_path:
+            raise ValueError(
+                "Best model path not found. \
+                Make sure the model was trained and saved."
+            )
+
         super().test(
             model=model,
             dataloaders=datamodule.test_dataloader(),
-            ckpt_path=f"{self.config.ckpt_path}/last.ckpt",
+            ckpt_path=best_ckpt_path,
         )

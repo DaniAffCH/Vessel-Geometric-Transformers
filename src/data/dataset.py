@@ -13,6 +13,8 @@ from config import DatasetConfig
 from src.data.vessel import Vessel
 from src.utils.definitions import Category
 
+NUM_FEATURES = 4
+
 
 class VesselDataset(InMemoryDataset):  # type: ignore[misc]
     """
