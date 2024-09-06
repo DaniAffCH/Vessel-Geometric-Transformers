@@ -168,13 +168,3 @@ class EquivariantJoin(GeometricOperation):
     ) -> torch.Tensor:
         # z0123 (x* ∧ y*)*
         return z[..., [-1]] * Join.apply(x, y)
-
-
-"""
-class SandwichProduct(GeometricOperation):
-    @override
-    @staticmethod
-    def apply(x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
-        # TODO
-        raise NotImplementedError()
-"""

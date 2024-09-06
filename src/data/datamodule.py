@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 from torch_geometric.data import Data, InMemoryDataset
-from torch_geometric.loader import DataLoader as GeometricDataLoader
 
 from config.dataclasses import DatasetConfig
 from src.data.dataset import VesselDataset
@@ -73,7 +72,7 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
             )
         )
 
-    def train_dataloader(self) -> GeometricDataLoader:
+    def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_set,
             batch_size=self.config.batch_size,
@@ -81,24 +80,27 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
                 batch, self.config.features_size_limit
             ),
             shuffle=True,
+            num_workers=16,
         )
 
-    def val_dataloader(self) -> GeometricDataLoader:
+    def val_dataloader(self) -> DataLoader:
         return DataLoader(
             self.val_set,
             batch_size=self.config.batch_size,
             collate_fn=lambda batch: collate_vessels(
                 batch, self.config.features_size_limit
             ),
+            num_workers=16,
         )
 
-    def test_dataloader(self) -> GeometricDataLoader:
+    def test_dataloader(self) -> DataLoader:
         return DataLoader(
             self.test_set,
             batch_size=self.config.batch_size,
             collate_fn=lambda batch: collate_vessels(
                 batch, self.config.features_size_limit
             ),
+            num_workers=16,
         )
 
     @staticmethod
