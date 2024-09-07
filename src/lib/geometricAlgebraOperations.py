@@ -82,7 +82,7 @@ class GeometricProduct(GeometricOperation):
             Path(__file__).resolve().parent
             / "precomputed/geometric_product.pt"
         )
-        basis = torch.load(BILIN_PATH)
+        basis = torch.load(BILIN_PATH, weights_only=True)
         basis = basis.to_dense()
         basis = basis.to(device=device, dtype=torch.float32)
         return basis
@@ -106,7 +106,7 @@ class OuterProduct(GeometricProduct):
         BILIN_PATH = (
             Path(__file__).resolve().parent / "precomputed/outer_product.pt"
         )
-        basis = torch.load(BILIN_PATH)
+        basis = torch.load(BILIN_PATH, weights_only=True)
         basis = basis.to_dense()
         basis = basis.to(device=device, dtype=torch.float32)
         return basis
