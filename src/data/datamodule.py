@@ -126,6 +126,8 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
         indices = list(range(n_samples))
 
         split_indices = [int(ratio * n_samples) for ratio in ratios]
+
+        # Making sure there are no leftovers due to fp32 precision
         split_indices[-1] = n_samples - sum(split_indices[:-1])
 
         start_idx = 0
@@ -223,10 +225,10 @@ def collate_vessels(
     return collated_batch
 
 
-def normalize(data: Tensor) -> Tensor:
+def normalize(data: Tensor, epsilon: float = 1e-6) -> Tensor:
     min = data.min()
     max = data.max()
     data = (data - min) / (
-        max - min + 1e-6
+        max - min + epsilon
     )  # Adding epsilon to avoid division by zero
     return data

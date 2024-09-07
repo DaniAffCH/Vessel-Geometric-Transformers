@@ -1,6 +1,7 @@
 from .geometricAlgebraElements import (
     PlaneGeometricAlgebra,
     PointGeometricAlgebra,
+    ReflectionGeometricAlgebra,
     ScalarGeometricAlgebra,
     TranslationGeometricAlgebra,
 )
@@ -10,4 +11,5 @@ __all__ = [
     "PlaneGeometricAlgebra",
     "TranslationGeometricAlgebra",
     "ScalarGeometricAlgebra",
+    "ReflectionGeometricAlgebra",
 ]

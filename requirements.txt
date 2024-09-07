@@ -16,3 +16,5 @@ pyyaml
 types-PyYAML
 types-tqdm
 wandb
+clifford
+unittest

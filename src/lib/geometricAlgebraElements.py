@@ -254,3 +254,49 @@ class PlaneGeometricAlgebra(GeometricAlgebraBase):
         """
         v[:, 2:5] = element
         return v
+
+
+class ReflectionGeometricAlgebra(GeometricAlgebraBase):
+    """
+    Geometric algebra operations specific to planes.
+    """
+
+    @override
+    @staticmethod
+    def _validate_element(element: torch.Tensor) -> None:
+        """
+        Validate the input tensor for reflection.
+
+        Args:
+            element (torch.Tensor): The input tensor representing
+                                    the reflection.
+        """
+        coordExpected = 4
+        dimExpected = 2
+        assert (
+            element.ndim == dimExpected
+        ), f"Expected an element with {dimExpected} dimensions,\
+             {element.ndim} given"
+        assert (
+            element.shape[1] == coordExpected
+        ), f"Expected a plane to have {coordExpected} coordinates,\
+             {element.shape[1]} given"
+
+    @override
+    @staticmethod
+    def _fill_multivector(
+        v: torch.Tensor, element: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Fill the multivector with reflection data.
+
+        Args:
+            v (torch.Tensor): The empty multivector tensor to fill.
+            element (torch.Tensor): The input tensor containing
+                                    the reflection data.
+
+        Returns:
+            torch.Tensor: The filled multivector.
+        """
+        v[:, 1:5] = element
+        return v
