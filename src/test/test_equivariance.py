@@ -17,11 +17,15 @@ from src.models.layers.geometric.geometricAttention import (
 class TestEquivariance(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.num_inputs = 5
         self.num_checks = 100
         self.tolerance = 1e-5
-        self.inputs = [torch.randn(16) for _ in range(self.num_inputs)]
-        self.references = [torch.rand_like(i) for i in self.inputs]
+        self.inputs = torch.Tensor([])
+        self.num_inputs = torch.Tensor([])
+
+    @classmethod
+    def setTestData(cls, inputs: torch.Tensor) -> None:
+        cls.inputs = inputs
+        cls.num_inputs = inputs.shape[0]
 
     def print_ok(self, layer: torch.nn.Module) -> None:
         print(
@@ -46,9 +50,9 @@ class TestEquivariance(unittest.TestCase):
     def test_bilinear_layer(self) -> None:
         test_layer = GeometricBilinearLayer(1, 2)
 
-        for i, (mv, r) in enumerate(zip(self.inputs, self.references)):
+        for i, mv in enumerate(self.inputs):
             res = checkEquivariance(
-                test_layer, mv, self.num_checks, self.tolerance, reference=r
+                test_layer, mv, self.num_checks, self.tolerance, reference=mv
             )
             self.assertTrue(
                 res,
@@ -103,7 +107,3 @@ class TestEquivariance(unittest.TestCase):
             )
 
         self.print_ok(test_layer)
-
-
-if __name__ == "__main__":
-    unittest.main()
