@@ -16,11 +16,14 @@ from src.models.layers.geometric.geometricAttention import (
 
 class TestEquivariance(unittest.TestCase):
 
+    INPUT_DATA: torch.Tensor = torch.tensor([])
+
     def setUp(self) -> None:
         self.num_checks = 100
         self.tolerance = 1e-5
-        self.inputs = torch.Tensor([])
-        self.num_inputs = torch.Tensor([])
+        self.inputs = self.INPUT_DATA
+        self.num_inputs = self.INPUT_DATA.shape[0]
+        assert self.num_inputs > 0, "expected at least one sample"
 
     @classmethod
     def setTestData(cls, inputs: torch.Tensor) -> None:
