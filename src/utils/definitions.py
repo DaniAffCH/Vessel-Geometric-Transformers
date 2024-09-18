@@ -7,3 +7,13 @@ class Category(Enum):
 
     def __repr__(self) -> str:
         return f"Category.{self.name}"
+
+
+class Feature(Enum):
+    WSS = 0
+    POS = 1
+    PRESSURE = 2
+    FACE = 3
+
+    def __repr__(self) -> str:
+        return f"Feature.{self.name}"

@@ -4,6 +4,7 @@ from typing import List
 import lightning as L
 import torch
 import torch.nn.functional as F
+from einops import rearrange
 from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 from torch_geometric.data import Data, InMemoryDataset
@@ -17,6 +18,7 @@ from src.lib import (
     ScalarGeometricAlgebra,
     TranslationGeometricAlgebra,
 )
+from src.utils.definitions import Feature
 
 
 class InMemorySubset(Subset, InMemoryDataset):  # type: ignore[misc]
@@ -141,6 +143,41 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
 
         return splitted_datasets
 
+    def extract_feature(self, feature: Feature) -> torch.Tensor:
+        """
+        Extracts a specific feature from the dataset. Every feature of the
+        dataset is represented as a matrix of dimensions (n,d) where n is the
+        size of the feature (number of vectors) and d the dimension of each
+        feature vector. This function flattens the matrix of each data point to
+        a one-dimensional vector, returning a vector of dimension (m,n*d) where
+        m is the number of arteries in the dataset.
+
+        Args:
+            feature (Feature): The feature to extract.
+
+        Returns:
+            torch.Tensor: The extracted feature.
+        """
+        dataloader = DataLoader(
+            self.data,
+            batch_size=1,
+            collate_fn=lambda batch: collate_vessels(
+                batch, self.config.features_size_limit, raw=True
+            ),
+            num_workers=16,
+        )
+
+        feature_list = []
+        labels = []
+        for batch in dataloader:
+            assert isinstance(batch, VesselBatch), "Batch is not a VesselBatch"
+            batch.data = batch.data.squeeze(0)
+            feature_list.append(batch.data[feature.value, :, :])
+            labels.append(batch.labels.item())
+        feature_tensor = torch.stack(feature_list)
+
+        return rearrange(feature_tensor, "m n d -> m (n d)"), labels
+
 
 @dataclass
 class VesselBatch:
@@ -150,7 +187,10 @@ class VesselBatch:
 
 
 def collate_vessels(
-    batch: List[Vessel], size_limit: int, pad_value: int = -0xDEADBEEF
+    batch: List[Vessel],
+    size_limit: int,
+    pad_value: int = -0xDEADBEEF,
+    raw: bool = False,
 ) -> VesselBatch:
     """
     Collates a batch of Vessel objects into padded tensors.
@@ -173,21 +213,29 @@ def collate_vessels(
     labels: List[int] = []
 
     for vessel in batch:
-        # Normalizing the vessel data
-        wss = normalize(vessel.wss)
-        pos = normalize(vessel.pos)
-        pressure = normalize(vessel.pressure)
-        face = normalize(vessel.face.T)
 
-        # Extracting the geometric algebra elements
-        ga_elements = [
-            TranslationGeometricAlgebra.fromElement(wss),
-            PointGeometricAlgebra.fromElement(pos),
-            ScalarGeometricAlgebra.fromElement(pressure),
-            PlaneGeometricAlgebra.fromElement(face),
-        ]
+        if raw:
+            elements = [
+                vessel.wss,
+                vessel.pos,
+            ]  # TODO mancano le altre due perché cozzavano le dimensioni,
+            # devo trovare un modo migliore
+        else:
+            # Normalizing the vessel data
+            wss = normalize(vessel.wss)
+            pos = normalize(vessel.pos)
+            pressure = normalize(vessel.pressure)
+            face = normalize(vessel.face.T)
 
-        ga_elements = [
+            # Extracting the geometric algebra elements
+            elements = [
+                TranslationGeometricAlgebra.fromElement(wss),
+                PointGeometricAlgebra.fromElement(pos),
+                ScalarGeometricAlgebra.fromElement(pressure),
+                PlaneGeometricAlgebra.fromElement(face),
+            ]
+
+        elements = [
             (
                 F.pad(
                     tensor,
@@ -198,11 +246,11 @@ def collate_vessels(
                 if tensor.size(0) < size_limit
                 else tensor[:size_limit]
             )
-            for tensor in ga_elements
+            for tensor in elements
         ]
 
         # Construct the tensor by stacking geometric algebra elements
-        tensor = torch.stack(ga_elements)
+        tensor = torch.stack(elements)
 
         # Append the padded tensor to the padded_data list
         padded_data.append(tensor)
