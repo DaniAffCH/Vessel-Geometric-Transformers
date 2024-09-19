@@ -14,6 +14,7 @@ class Feature(Enum):
     POS = 1
     PRESSURE = 2
     FACE = 3
+    INLET_INDEX = 4
 
     def __repr__(self) -> str:
         return f"Feature.{self.name}"

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 import lightning as L
 import torch
@@ -11,7 +11,7 @@ from torch_geometric.data import Data, InMemoryDataset
 
 from config.dataclasses import DatasetConfig
 from src.data.dataset import VesselDataset
-from src.data.vessel import Vessel
+from src.data.vessel import Vessel, get_feature
 from src.lib import (
     PlaneGeometricAlgebra,
     PointGeometricAlgebra,
@@ -152,6 +152,12 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
         a one-dimensional vector, returning a vector of dimension (m,n*d) where
         m is the number of arteries in the dataset.
 
+        m -> number of arteries
+        b -> batch_size
+        f -> number of features
+        n -> number of vectors
+        d -> vector dimension
+
         Args:
             feature (Feature): The feature to extract.
 
@@ -162,21 +168,26 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
             self.data,
             batch_size=1,
             collate_fn=lambda batch: collate_vessels(
-                batch, self.config.features_size_limit, raw=True
+                batch, self.config.features_size_limit, feature=feature
             ),
             num_workers=16,
         )
 
         feature_list = []
-        labels = []
+        label_list = []
         for batch in dataloader:
             assert isinstance(batch, VesselBatch), "Batch is not a VesselBatch"
-            batch.data = batch.data.squeeze(0)
-            feature_list.append(batch.data[feature.value, :, :])
-            labels.append(batch.labels.item())
+            feature_list.append(batch.data)
+            label_list.append(batch.labels.item())
         feature_tensor = torch.stack(feature_list)
+        if feature_tensor.dim() == 4:
+            feature_tensor = feature_tensor.unsqueeze(-1)
+        label_tensor = torch.Tensor(label_list)
 
-        return rearrange(feature_tensor, "m n d -> m (n d)"), labels
+        return (
+            rearrange(feature_tensor, "m b f n d -> m (b f n d)"),
+            label_tensor,
+        )
 
 
 @dataclass
@@ -190,7 +201,7 @@ def collate_vessels(
     batch: List[Vessel],
     size_limit: int,
     pad_value: int = -0xDEADBEEF,
-    raw: bool = False,
+    feature: Optional[Feature] = None,
 ) -> VesselBatch:
     """
     Collates a batch of Vessel objects into padded tensors.
@@ -214,12 +225,8 @@ def collate_vessels(
 
     for vessel in batch:
 
-        if raw:
-            elements = [
-                vessel.wss,
-                vessel.pos,
-            ]  # TODO mancano le altre due perché cozzavano le dimensioni,
-            # devo trovare un modo migliore
+        if feature:
+            elements = [get_feature(vessel, feature)]
         else:
             # Normalizing the vessel data
             wss = normalize(vessel.wss)

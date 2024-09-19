@@ -1,7 +1,9 @@
 from enum import Enum
+from typing import Optional
 
-# import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+
+# import numpy as np
 import torch
 from sklearn.decomposition import PCA
 
@@ -28,22 +30,22 @@ def plot_data(
     y: torch.Tensor,
     classes: Enum,
     clf: torch.nn.Module = None,
+    name: Optional[str] = None,
 ) -> None:
     X_pca = reduce_dim(X, 2)
     x_min, x_max, y_min, y_max = axis_limits(X_pca)
     plt.axis([x_min, x_max, y_min, y_max])
-    # my_map = mcolors.ListedColormap(
-    # plt.cm.rainbow(np.linspace(0, 1, len(classes)))
-    # )
 
     for type in classes:  # type: ignore
+        y = y.int()
         X_pca_type = X_pca[y == type.value]
         plt.scatter(X_pca_type[:, 0], X_pca_type[:, 1], label=type)
 
     # if clf:
     # generating points in this grid
-    # xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
-    # np.arange(y_min, y_max, 0.1))
+    # xx, yy = np.meshgrid(
+    # np.arange(x_min, x_max, 0.1), np.arange(y_min, y_max, 0.1)
+    # )
     # points = np.c_[xx.ravel(), yy.ravel()]
 
     # predictions reshaped to match the meshgrid shape
@@ -54,5 +56,7 @@ def plot_data(
     # plt.contourf(xx, yy, Z, alpha=0.15, cmap=my_map)
     # plt.contour(xx,yy, Z, colors='k', linewidths=1)
 
+    if name:
+        plt.title(name)
     plt.legend()
     plt.show()
