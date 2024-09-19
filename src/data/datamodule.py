@@ -226,7 +226,10 @@ def collate_vessels(
     for vessel in batch:
 
         if feature:
-            elements = [get_feature(vessel, feature)]
+            tensor = get_feature(vessel, feature)
+            if feature == Feature.FACE:
+                tensor = tensor.T
+            elements = [tensor]
         else:
             # Normalizing the vessel data
             wss = normalize(vessel.wss)
