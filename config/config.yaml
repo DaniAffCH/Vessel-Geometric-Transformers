@@ -26,9 +26,14 @@ gatr:
   features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 trainer:
-  max_epochs: 100
+  max_epochs: 15
   patience: 3
   ckpt_path: "ckpt"
   wandb_project: "Vessel-Geometric-Transformers"
   min_delta: 0.00001
   resume_training: False
+
+optuna:
+  n_trials: 3
+  seed: 42
+  

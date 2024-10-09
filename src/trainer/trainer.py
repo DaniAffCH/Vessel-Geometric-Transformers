@@ -1,10 +1,10 @@
 import os
 
 import lightning as L
-import wandb
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 
+import wandb
 from config.dataclasses import TrainerConfig
 
 
@@ -13,7 +13,10 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
 
         self.config = config
 
-        wandb.init(
+        # api_key = "41e4ba7425e35355cd4456863ed4cd9c73c084a3"
+        # # TODO: Hardcoded API key (?)
+        # wandb.login(key=api_key)
+        wandb.init(  # type: ignore
             project=config.wandb_project,
         )
 
