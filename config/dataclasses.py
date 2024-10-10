@@ -47,8 +47,15 @@ class GatrConfig:
 
 
 @dataclass
+class OptunaConfig:
+    n_trials: int = MISSING
+    seed: int = MISSING
+
+
+@dataclass
 class Config:
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     trainer: TrainerConfig = field(default_factory=TrainerConfig)
     baseline: BaselineConfig = field(default_factory=BaselineConfig)
     gatr: GatrConfig = field(default_factory=GatrConfig)
+    optuna: OptunaConfig = field(default_factory=OptunaConfig)

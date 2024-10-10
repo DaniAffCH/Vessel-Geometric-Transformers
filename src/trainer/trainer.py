@@ -18,7 +18,10 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
 
         self.config = config
 
-        wandb.init(  # type:ignore
+        # api_key = "41e4ba7425e35355cd4456863ed4cd9c73c084a3"
+        # # TODO: Hardcoded API key (?)
+        # wandb.login(key=api_key)
+        wandb.init(  # type: ignore
             project=config.wandb_project,
         )
 
