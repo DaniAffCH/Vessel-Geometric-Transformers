@@ -13,7 +13,7 @@ def optuna_callback(study: optuna.study.Study, trial: optuna.Trial) -> None:
 
 def baseline_hpo(config: Config) -> None:
 
-    def objective(trial: optuna.Trial) -> float:
+    def objective(trial: optuna.Trial, model: L.LightningModule, data: L.LightningDataModule) -> float:
 
         # Hyperparameters to optimize
         config.baseline.learning_rate = trial.suggest_float(
@@ -28,8 +28,6 @@ def baseline_hpo(config: Config) -> None:
         config.dataset.batch_size = trial.suggest_int("batch_size", 2, 5)
 
         trainer = L.Trainer(max_epochs=3)
-        model = BaselineTransformer(config.baseline)
-        data = VesselDataModule(config.dataset)
 
         trainer.fit(model, data)
         optimized_value: float = trainer.logged_metrics["val/loss"]
@@ -43,8 +41,11 @@ def baseline_hpo(config: Config) -> None:
         pruner=pruner,
         study_name="baseline_hpo",
     )
+    
+    model = BaselineTransformer(config.baseline)
+    data = VesselDataModule(config.dataset)
     study.optimize(
-        lambda trial: objective(trial),
+        lambda trial: objective(trial,model,data),
         n_trials=config.optuna.n_trials,
         callbacks=[optuna_callback],
     )
@@ -57,7 +58,7 @@ def baseline_hpo(config: Config) -> None:
 
 def gatr_hpo(config: Config) -> None:
 
-    def objective(trial: optuna.Trial) -> float:
+    def objective(trial: optuna.Trial, model: L.LightningModule, data: L.LightningDataModule) -> float:
         # Hyperparameters to optimize
         config.gatr.learning_rate = trial.suggest_float(
             "lr", 1e-5, 1e-1, log=True
@@ -69,8 +70,6 @@ def gatr_hpo(config: Config) -> None:
         config.dataset.batch_size = trial.suggest_int("batch_size", 2, 5)
 
         trainer = L.Trainer(max_epochs=2)
-        model = Gatr(config.gatr)
-        data = VesselDataModule(config.dataset)
 
         trainer.fit(model, data)
         optimized_value: float = trainer.logged_metrics["val/loss"]
@@ -84,8 +83,11 @@ def gatr_hpo(config: Config) -> None:
         pruner=pruner,
         study_name="gatr_hpo",
     )
+    
+    model = Gatr(config.gatr)
+    data = VesselDataModule(config.dataset)
     study.optimize(
-        lambda trial: objective(trial),
+        lambda trial: objective(trial, model, data),
         n_trials=config.optuna.n_trials,
         callbacks=[optuna_callback],
     )
