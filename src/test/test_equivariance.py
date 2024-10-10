@@ -15,6 +15,9 @@ from src.models.layers.geometric.geometricAttention import (
 
 
 class TestEquivariance(unittest.TestCase):
+    """
+    Using unittests to check whether the Geometric layers are equivariant
+    """
 
     INPUT_DATA: torch.Tensor = torch.tensor([])
 
@@ -37,6 +40,9 @@ class TestEquivariance(unittest.TestCase):
         )
 
     def test_equilinear_layer(self) -> None:
+        """
+        Tests the equivariance of the EquiLinearLayer.
+        """
         test_layer = EquiLinearLayer(1, 1)
 
         for i, mv in enumerate(self.inputs):
@@ -51,6 +57,9 @@ class TestEquivariance(unittest.TestCase):
         self.print_ok(test_layer)
 
     def test_bilinear_layer(self) -> None:
+        """
+        Tests the equivariance of the GeometricBilinearLayer.
+        """
         test_layer = GeometricBilinearLayer(1, 2)
 
         for i, mv in enumerate(self.inputs):
@@ -66,6 +75,9 @@ class TestEquivariance(unittest.TestCase):
         self.print_ok(test_layer)
 
     def test_gatedgelu_layer(self) -> None:
+        """
+        Tests the equivariance of the GatedGELU.
+        """
         test_layer = GatedGELU()
 
         for i, mv in enumerate(self.inputs):
@@ -79,6 +91,9 @@ class TestEquivariance(unittest.TestCase):
         self.print_ok(test_layer)
 
     def test_equinorm_layer(self) -> None:
+        """
+        Tests the equivariance of the EquiNormLayer.
+        """
         test_layer = EquiNormLayer()
 
         for i, mv in enumerate(self.inputs):
@@ -92,6 +107,9 @@ class TestEquivariance(unittest.TestCase):
         self.print_ok(test_layer)
 
     def test_geomattention_layer(self) -> None:
+        """
+        Tests the equivariance of the GeometricAttentionLayer.
+        """
         test_layer = GeometricAttentionLayer(1, 1)
 
         for i, mv in enumerate(self.inputs):

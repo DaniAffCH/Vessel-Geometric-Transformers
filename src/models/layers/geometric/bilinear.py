@@ -12,10 +12,12 @@ class GeometricBilinearLayer(nn.Module):  # type:ignore[misc]
     def __init__(self, inputFeatures: int, outputFeatures: int) -> None:
         super(GeometricBilinearLayer, self).__init__()
 
+        # Ensure the number of output features is even for correct splitting
         assert outputFeatures % 2 == 0, "Output features number must be even"
 
         hiddenFeatures = outputFeatures // 2
 
+        # Separate projections for product and join components
         self.prodX_proj = EquiLinearLayer(inputFeatures, hiddenFeatures)
         self.prodY_proj = EquiLinearLayer(inputFeatures, hiddenFeatures)
         self.joinX_proj = EquiLinearLayer(inputFeatures, hiddenFeatures)
@@ -26,19 +28,20 @@ class GeometricBilinearLayer(nn.Module):  # type:ignore[misc]
     def forward(
         self, x: torch.Tensor, reference: torch.Tensor
     ) -> torch.Tensor:
-
+        # Compute product features
         prodX = self.prodX_proj(x)
         prodY = self.prodY_proj(x)
-
         prodFeatures = GeometricProduct.apply(prodX, prodY)
 
+        # Compute join features, using reference for equivariance
         joinX = self.joinX_proj(x)
         joinY = self.joinY_proj(x)
-
         joinFeatures = EquivariantJoin.apply(joinX, joinY, reference)
 
+        # Concatenate product and join features along the last dimension
         features = torch.cat((prodFeatures, joinFeatures), dim=-2)
 
+        # Final projection to output feature space
         features = self.final_proj(features)
 
         return features

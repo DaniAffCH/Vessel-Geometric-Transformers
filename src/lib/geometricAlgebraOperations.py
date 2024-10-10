@@ -30,6 +30,7 @@ class Blade(GeometricOperation):
 
         # Tuples represent indices
         # homogeneous basis vector * e0
+        # Tips: remember the property e0*e0 = 0
         # [e0 | 0 e0e1 e0e2 e0e3 | 0 0 0 e012 e013 e023 | 0 0 0 e123 | 0]
         additional_idx = [
             [(1, 0)],  # e0

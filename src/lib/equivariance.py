@@ -8,6 +8,11 @@ from clifford import pga
 
 from . import ReflectionGeometricAlgebra
 
+"""
+This class is a wrapper of cf.MultiVector extending it with
+useful methods to generate reflection multivectors and handle torch tensors.
+"""
+
 
 class ReflectionMultivector(cf.MultiVector):  # type: ignore
     def __init__(
@@ -19,7 +24,7 @@ class ReflectionMultivector(cf.MultiVector):  # type: ignore
         dtype: np.dtype = np.float64
     ) -> None:
         super().__init__(layout, value, string, dtype=dtype)
-
+        # It works only for G(3,0,1)
         assert layout == pga.layout, "Expected a Projective G(3,0,1) algebra."
 
     """

@@ -1,19 +1,24 @@
 import os
 
 import lightning as L
-import wandb
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 
+import wandb
 from config.dataclasses import TrainerConfig
 
 
 class VesselTrainer(L.Trainer):  # type: ignore[misc]
+    """
+    This class extends the lightning Trainer to add
+    gatr specific configurations
+    """
+
     def __init__(self, config: TrainerConfig):
 
         self.config = config
 
-        wandb.init(
+        wandb.init(  # type:ignore
             project=config.wandb_project,
         )
 
@@ -41,6 +46,8 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
     def fit(
         self, model: L.LightningModule, datamodule: L.LightningDataModule
     ) -> None:
+        """Train the model, resuming a previous checkpoint if needed."""
+
         checkpoint_path = f"{self.config.ckpt_path}/last.ckpt"
 
         if self.config.resume_training and os.path.exists(checkpoint_path):
