@@ -13,6 +13,8 @@ def optuna_callback(study: optuna.study.Study, trial: optuna.Trial) -> None:
 
 def baseline_hpo(config: Config) -> None:
 
+    print("Starting a new hyperparameter optimization study...")
+
     def objective(trial: optuna.Trial) -> float:
 
         # Hyperparameters to optimize
@@ -49,6 +51,15 @@ def baseline_hpo(config: Config) -> None:
         callbacks=[optuna_callback],
     )
 
+    print("Hyperparameter optimization completed.")
+    print(
+        f"Best hyperparameters found:\n\
+          Learning rate: {study.best_params['lr']}\n\
+          Number of Attention Heads: {study.best_params['num_heads']}\n\
+          Number of Attention Layers: {study.best_params['num_layers']}\n\
+          Batch Size: {study.best_params['batch_size']}\n"
+    )
+
     config.baseline.learning_rate = study.best_params["lr"]
     config.baseline.transformer_num_heads = study.best_params["num_heads"]
     config.baseline.transformer_num_layers = study.best_params["num_layers"]
@@ -56,6 +67,8 @@ def baseline_hpo(config: Config) -> None:
 
 
 def gatr_hpo(config: Config) -> None:
+
+    print("Starting a new hyperparameter optimization study...")
 
     def objective(trial: optuna.Trial) -> float:
         # Hyperparameters to optimize
@@ -88,6 +101,15 @@ def gatr_hpo(config: Config) -> None:
         lambda trial: objective(trial),
         n_trials=config.optuna.n_trials,
         callbacks=[optuna_callback],
+    )
+
+    print("Hyperparameter optimization completed.")
+    print(
+        f"Best hyperparameters found:\n\
+          Learning rate: {study.best_params['lr']}\n\
+          Number of Attention Heads: {study.best_params['num_heads']}\n\
+          Number of Attention Layers: {study.best_params['num_layers']}\n\
+          Batch Size: {study.best_params['batch_size']}\n"
     )
 
     config.gatr.learning_rate = study.best_params["lr"]

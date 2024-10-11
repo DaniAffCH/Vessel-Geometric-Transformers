@@ -19,6 +19,7 @@ class DatasetConfig:
 
 @dataclass
 class TrainerConfig:
+    wandb_api_key: str = MISSING
     max_epochs: int = MISSING
     patience: int = MISSING
     ckpt_path: str = MISSING

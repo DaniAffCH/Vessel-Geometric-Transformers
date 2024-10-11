@@ -35,8 +35,9 @@ class TestEquivariance(unittest.TestCase):
 
     def print_ok(self, layer: torch.nn.Module) -> None:
         print(
-            f"\n✅ {layer.__class__.__name__} passed all equivariance tests.\
-                  [{self.num_inputs} inputs, {self.num_checks} checks each]"
+            f"\n✅ {layer.__class__.__name__} passed all equivariance tests \
+              with a tolerance of {self.tolerance}.\
+              [{self.num_inputs} inputs, {self.num_checks} checks each]"
         )
 
     def test_equilinear_layer(self) -> None:

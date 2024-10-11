@@ -26,6 +26,7 @@ gatr:
   features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 trainer:
+  wandb_api_key: "41e4ba7425e35355cd4456863ed4cd9c73c084a3"
   max_epochs: 15
   patience: 3
   ckpt_path: "ckpt"
