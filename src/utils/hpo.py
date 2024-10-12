@@ -2,15 +2,15 @@ import lightning as L
 import optuna
 
 from config.dataclasses import Config
+from src.models.baseline import BaselineTransformer
+from src.models.gatr import Gatr
 
 
 def optuna_callback(study: optuna.study.Study, trial: optuna.Trial) -> None:
     print(f"Trial {trial.number} finished with value {trial.value}")
 
 
-def baseline_hpo(
-    config: Config, model: L.LightningModule, data: L.LightningDataModule
-) -> None:
+def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
 
     print("Starting a new hyperparameter optimization study...")
 
@@ -38,6 +38,7 @@ def baseline_hpo(
         optimized_value: float = trainer.logged_metrics["val/loss"]
         return optimized_value
 
+    model = BaselineTransformer(config.baseline)
     sampler = optuna.samplers.TPESampler(seed=config.optuna.seed)
     pruner = optuna.pruners.MedianPruner()
     study = optuna.create_study(
@@ -68,9 +69,7 @@ def baseline_hpo(
     config.dataset.batch_size = study.best_params["batch_size"]
 
 
-def gatr_hpo(
-    config: Config, model: L.LightningModule, data: L.LightningDataModule
-) -> None:
+def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
 
     print("Starting a new hyperparameter optimization study...")
 
@@ -95,6 +94,7 @@ def gatr_hpo(
         optimized_value: float = trainer.logged_metrics["val/loss"]
         return optimized_value
 
+    model = Gatr(config.gatr)
     sampler = optuna.samplers.TPESampler(seed=config.optuna.seed)
     pruner = optuna.pruners.MedianPruner()
     study = optuna.create_study(
