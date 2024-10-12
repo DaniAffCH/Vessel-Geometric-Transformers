@@ -11,6 +11,28 @@ def optuna_callback(study: optuna.study.Study, trial: optuna.Trial) -> None:
 
 
 def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
+    """
+    Perform hyperparameter optimization for the Baseline Transformer model
+    using Optuna.
+    Args:
+        config (Config): Configuration object containing hyperparameter
+        settings and other configurations.
+        data (L.LightningDataModule): LightningDataModule object containing
+        the dataset.
+    Returns:
+        None
+    This function initializes an Optuna study to optimize hyperparameters
+    for the Baseline Transformer model. It defines an objective function
+    that suggests hyperparameters, trains the model, and evaluates its
+    performance. The best hyperparameters found during the optimization
+    are then updated in the provided configuration object.
+    The hyperparameters optimized include:
+        - Learning rate
+        - Number of attention heads
+        - Number of transformer layers
+        - Batch size
+    In the end, the optimal parameters are written into the config object.
+    """
 
     print("Starting a new hyperparameter optimization study...")
 
@@ -19,6 +41,9 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
         model: L.LightningModule,
         data: L.LightningDataModule,
     ) -> float:
+
+        print("Starting a new trial...")
+        print(f"Trial number: {trial.number}")
 
         # Hyperparameters to optimize
         config.baseline.learning_rate = trial.suggest_float(
@@ -33,6 +58,11 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
         config.dataset.batch_size = trial.suggest_categorical(
             "batch_size", choices=[2, 4, 8, 16]
         )
+
+        print(f"Learning rate: {config.baseline.learning_rate}")
+        print(f"Attention Heads: {config.baseline.transformer_num_heads}")
+        print(f"Attention Layers: {config.baseline.transformer_num_layers}")
+        print(f"Batch Size: {config.dataset.batch_size}")
 
         trainer = L.Trainer(max_epochs=3)
 
@@ -72,6 +102,26 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
 
 
 def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
+    """
+    Perform hyperparameter optimization for the GATR model using Optuna.
+    Args:
+        config (Config): Configuration object containing hyperparameter
+        settings and other configurations.
+        data (L.LightningDataModule): LightningDataModule object containing
+        the dataset.
+    Returns:
+        None
+    This function initializes an Optuna study to optimize hyperparameters
+    for the GATR model. It defines an objective function that suggests
+    hyperparameters, trains the model, and evaluates its performance. The
+    best hyperparameters found during the optimization are then updated in
+    the provided configuration object.
+    The hyperparameters optimized include:
+        - Learning rate
+        - Number of attention heads
+        - Number of backbone layers
+        - Batch size
+    """
 
     print("Starting a new hyperparameter optimization study...")
 
@@ -80,6 +130,9 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
         model: L.LightningModule,
         data: L.LightningDataModule,
     ) -> float:
+        print("Starting a new trial...")
+        print(f"Trial number: {trial.number}")
+
         # Hyperparameters to optimize
         config.gatr.learning_rate = trial.suggest_float(
             "lr", 1e-4, 1e-1, log=True
@@ -93,6 +146,11 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
         config.dataset.batch_size = trial.suggest_categorical(
             "batch_size", choices=[2, 4, 8, 16]
         )
+
+        print(f"Learning rate: {config.gatr.learning_rate}")
+        print(f"Attention Heads: {config.gatr.num_attention_heads}")
+        print(f"Attention Layers: {config.gatr.num_backbone_layers}")
+        print(f"Batch Size: {config.dataset.batch_size}")
 
         trainer = L.Trainer(max_epochs=2)
 
