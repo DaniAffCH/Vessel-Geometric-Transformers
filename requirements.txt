@@ -4,7 +4,7 @@ flake8
 black
 mypy
 h5py
-numba
+numba==0.58.1
 einops
 torch
 torch_geometric==2.5.3
