@@ -22,15 +22,17 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
 
         # Hyperparameters to optimize
         config.baseline.learning_rate = trial.suggest_float(
-            "lr", 1e-5, 1e-1, log=True
+            "lr", 1e-4, 1e-1, log=True
         )
-        config.baseline.transformer_num_heads = trial.suggest_int(
-            "num_heads", 2, 4, step=2
+        config.baseline.transformer_num_heads = trial.suggest_categorical(
+            "num_heads", choices=[2, 4, 8]
         )
-        config.baseline.transformer_num_layers = trial.suggest_int(
-            "num_layers", 1, 3
+        config.baseline.transformer_num_layers = trial.suggest_categorical(
+            "num_layers", choices=[1, 2, 3]
         )
-        config.dataset.batch_size = trial.suggest_int("batch_size", 2, 5)
+        config.dataset.batch_size = trial.suggest_categorical(
+            "batch_size", choices=[2, 4, 8, 16]
+        )
 
         trainer = L.Trainer(max_epochs=3)
 
@@ -80,13 +82,17 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
     ) -> float:
         # Hyperparameters to optimize
         config.gatr.learning_rate = trial.suggest_float(
-            "lr", 1e-5, 1e-1, log=True
+            "lr", 1e-4, 1e-1, log=True
         )
-        config.gatr.num_attention_heads = trial.suggest_int(
-            "num_heads", 2, 4, step=2
+        config.gatr.num_attention_heads = trial.suggest_categorical(
+            "num_heads", choices=[2, 4, 8]
         )
-        config.gatr.num_backbone_layers = trial.suggest_int("num_layers", 1, 3)
-        config.dataset.batch_size = trial.suggest_int("batch_size", 2, 5)
+        config.gatr.num_backbone_layers = trial.suggest_categorical(
+            "num_layers", choices=[1, 2, 3]
+        )
+        config.dataset.batch_size = trial.suggest_categorical(
+            "batch_size", choices=[2, 4, 8, 16]
+        )
 
         trainer = L.Trainer(max_epochs=2)
 
