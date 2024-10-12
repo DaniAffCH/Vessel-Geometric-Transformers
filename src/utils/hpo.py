@@ -2,16 +2,15 @@ import lightning as L
 import optuna
 
 from config.dataclasses import Config
-from src.data.datamodule import VesselDataModule
-from src.models import BaselineTransformer
-from src.models.gatr import Gatr
 
 
 def optuna_callback(study: optuna.study.Study, trial: optuna.Trial) -> None:
     print(f"Trial {trial.number} finished with value {trial.value}")
 
 
-def baseline_hpo(config: Config) -> None:
+def baseline_hpo(
+    config: Config, model: L.LightningModule, data: L.LightningDataModule
+) -> None:
 
     print("Starting a new hyperparameter optimization study...")
 
@@ -48,8 +47,6 @@ def baseline_hpo(config: Config) -> None:
         study_name="baseline_hpo",
     )
 
-    model = BaselineTransformer(config.baseline)
-    data = VesselDataModule(config.dataset)
     study.optimize(
         lambda trial: objective(trial, model, data),
         n_trials=config.optuna.n_trials,
@@ -71,7 +68,9 @@ def baseline_hpo(config: Config) -> None:
     config.dataset.batch_size = study.best_params["batch_size"]
 
 
-def gatr_hpo(config: Config) -> None:
+def gatr_hpo(
+    config: Config, model: L.LightningModule, data: L.LightningDataModule
+) -> None:
 
     print("Starting a new hyperparameter optimization study...")
 
@@ -105,8 +104,6 @@ def gatr_hpo(config: Config) -> None:
         study_name="gatr_hpo",
     )
 
-    model = Gatr(config.gatr)
-    data = VesselDataModule(config.dataset)
     study.optimize(
         lambda trial: objective(trial, model, data),
         n_trials=config.optuna.n_trials,

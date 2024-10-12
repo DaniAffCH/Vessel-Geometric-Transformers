@@ -12,8 +12,9 @@ lightning
 lightning[extra]
 tqdm
 omegaconf
-pytest
+pandas
 pathlib
+pytest
 pyyaml
 types-PyYAML
 types-tqdm
