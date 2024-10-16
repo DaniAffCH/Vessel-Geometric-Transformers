@@ -158,8 +158,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
                 assert (
                     len(f[sample_name].keys()) == 5
                 ), f"Corrupted sample found, {sample_name}"
-                data = self.get_data_from_h5(f[sample_name], label)
-                data_list.append(data)
+                data_list.append(self.get_data_from_h5(f[sample_name], label))
         return data_list
 
     def process(self) -> None:

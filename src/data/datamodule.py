@@ -1,3 +1,4 @@
+import gc
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -63,6 +64,7 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
         super().__init__()
         self.config = config
         self.data = VesselDataset(config, "complete")
+        gc.collect()
         self.train_set, self.val_set, self.test_set = (
             VesselDataModule.random_split(
                 self.data,
