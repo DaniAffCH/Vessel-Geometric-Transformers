@@ -9,6 +9,7 @@ from einops import rearrange
 from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 from torch_geometric.data import Data, InMemoryDataset
+from tqdm import tqdm
 
 from config.dataclasses import DatasetConfig
 from src.data.dataset import VesselDataset
@@ -177,7 +178,7 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
 
         feature_list = []
         label_list = []
-        for batch in dataloader:
+        for batch in tqdm(dataloader, desc=f"Extracting {feature}"):
             assert isinstance(batch, VesselBatch), "Batch is not a VesselBatch"
             feature_list.append(batch.data)
             label_list.append(batch.labels.item())

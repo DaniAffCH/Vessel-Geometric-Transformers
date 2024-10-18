@@ -6,7 +6,7 @@ class Category(Enum):
     Single = 1
 
     def __repr__(self) -> str:
-        return f"Category.{self.name}"
+        return f"{self.name}"
 
 
 class Feature(Enum):

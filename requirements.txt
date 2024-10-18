@@ -21,3 +21,4 @@ types-tqdm
 wandb
 clifford
 optuna
+seaborn

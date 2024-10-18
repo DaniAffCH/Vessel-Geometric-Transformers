@@ -6,7 +6,6 @@ from typing import Callable, List, Optional
 import gdown
 import h5py
 import torch
-import tqdm
 from torch_geometric.data import Data, InMemoryDataset
 
 from config import DatasetConfig
@@ -48,14 +47,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         """
         self.config = config
         self.purpose = purpose
-        super(VesselDataset, self).__init__(
-            config.download_path, transform, pre_transform
-        )
-        if os.path.exists(self.processed_paths[0]):
-            self.data, self.slices = torch.load(self.processed_paths[0])
-        else:
-            self.data = None
-            self.slices = None
+        super(VesselDataset, self).__init__(root=config.download_path)
 
     def __getitem__(self, idx: int) -> Vessel:
         """
@@ -67,8 +59,44 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         Returns:
             Data: The item at the specified index.
         """
-        elem: Vessel = self.get(idx)
-        return elem
+        # Load the item from the processed data saved in a .hdf5 file
+        category = Category.Bifurcating if idx < 1999 else Category.Single
+        with h5py.File(self.raw_paths[category.value], "r") as f:
+            idx = idx - 1999 if idx >= 1999 else idx
+            item_name = f"sample_{idx:04d}"
+            try:
+                item: Vessel = self.get_data_from_h5(f[item_name], category)
+            except KeyError:
+                idx = random.randint(0, len(f) - 1)
+                item_name = f"sample_{idx:04d}"
+                item = self.get_data_from_h5(f[item_name], category)
+        return item
+
+    def __len__(self) -> int:
+        """
+        Get the length of the dataset.
+
+        Returns:
+            int: The length of the dataset.
+        """
+        total_length = 0
+        for path in self.raw_paths:
+            with h5py.File(path, "r") as f:
+                total_length += len(f)
+        return total_length
+
+    @property
+    def labels(self) -> torch.Tensor:
+        """
+        Get the labels of the dataset.
+
+        Returns:
+            torch.Tensor: The labels of the dataset.
+        """
+        labels = torch.zeros(len(self), dtype=torch.long)
+        for i in range(len(self)):
+            labels[i] = self[i].label.value
+        return labels
 
     @property
     def raw_file_names(self) -> List[str]:
@@ -82,25 +110,12 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..")
         )
-        return [os.path.join(project_root, self.root, self.config.name)]
-
-    @property
-    def processed_file_names(self) -> List[str]:
-        """
-        The names of the files in the processed directory that
-        must be present to skip processing.
-
-        Returns:
-            List[str]: The names of the processed files.
-        """
-        project_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..")
-        )
-        data_root = os.path.join(
-            project_root, self.root, "processed", self.purpose
-        )
+        data_root = os.path.join(project_root, self.root)
         Path(data_root).mkdir(parents=True, exist_ok=True)
-        return [os.path.join(data_root, "data.pt")]
+        return [
+            os.path.join(data_root, Category.Bifurcating.name + ".hdf5"),
+            os.path.join(data_root, Category.Single.name + ".hdf5"),
+        ]
 
     @property
     def has_download(self) -> bool:
@@ -112,14 +127,29 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         """
         return True
 
+    @property
+    def has_process(self) -> bool:
+        """
+        Indicate whether the dataset has a process method.
+
+        Returns:
+            bool: True if the dataset can be processed, else False.
+        """
+        return False
+
     def download(self) -> None:
         """
         Download the dataset files from the specified URL.
         """
         if not os.path.exists(self.root):
             os.mkdir(self.root)
-        gdown.download_folder(
-            self.config.drive_url, output=self.config.download_path
+        gdown.download(
+            id=self.config.bifurcating_id,
+            output=self.raw_paths[Category.Bifurcating.value],
+        )
+        gdown.download(
+            id=self.config.single_id,
+            output=self.raw_paths[Category.Single.value],
         )
 
     def get_data_from_h5(self, sample: h5py.Group, label: Category) -> Data:
@@ -141,53 +171,3 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             inlet_index=torch.from_numpy(sample["inlet_idcs"][()]),
             label=label,
         )
-
-    def process_h5(self, h5_path: str, label: Category) -> List[Data]:
-        """
-        Process the HDF5 file and create a list of Data objects.
-
-        Args:
-            h5_path (str): The path to the HDF5 file.
-
-        Returns:
-            List[Data]: A list of created Data objects.
-        """
-        data_list = []
-        with h5py.File(h5_path, "r") as f:
-            for sample_name in tqdm.tqdm(f, desc=f"Loading {h5_path}"):
-                assert (
-                    len(f[sample_name].keys()) == 5
-                ), f"Corrupted sample found, {sample_name}"
-                data_list.append(self.get_data_from_h5(f[sample_name], label))
-        return data_list
-
-    def process(self) -> None:
-        """
-        Process the raw data files, shuffle the data,
-        and save the processed data.
-        """
-        data_list = []
-
-        bifurcating_db_path = os.path.join(
-            self.raw_paths[0], self.config.bifurcating_path
-        )
-        single_db_path = os.path.join(
-            self.raw_paths[0], self.config.single_path
-        )
-        data_list.extend(
-            self.process_h5(bifurcating_db_path, Category.Bifurcating)
-        )
-        data_list.extend(self.process_h5(single_db_path, Category.Single))
-
-        if self.pre_filter is not None:
-            data_list = [data for data in data_list if self.pre_filter(data)]
-
-        if self.pre_transform is not None:
-            data_list = [self.pre_transform(data) for data in data_list]
-
-        # Shuffle the data list
-        random.seed(42)
-        random.shuffle(data_list)
-
-        data, slices = self.collate(data_list)
-        torch.save((data, slices), self.processed_paths[0])

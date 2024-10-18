@@ -1,9 +1,8 @@
 dataset:
   drive_url: "https://drive.google.com/drive/folders/18lNjZPYKLmd7w-UX7GwepHAy2R-3YP3W"
-  name: "stead"
   download_path: "dataset"
-  bifurcating_path: "bifurcating/raw/database.hdf5"
-  single_path: "single/raw/database.hdf5"
+  bifurcating_id: 1U1UZR1nlIhlhzgGcPisASbTugn3iO7G5
+  single_id: 1b4Nhc3PUL_ZAChoOCRpCK4Nh-eKL66-v
   train_size: 0.75
   val_size: 0.15
   test_size: 0.1
