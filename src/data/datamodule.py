@@ -45,6 +45,9 @@ class InMemorySubset(Subset, InMemoryDataset):  # type: ignore[misc]
         elem: Vessel = Subset.__getitem__(self, idx)
         return elem
 
+    def getLabels(self) -> List[int]:
+        return [self.dataset[i].label.value for i in self.indices]
+
 
 class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
     """

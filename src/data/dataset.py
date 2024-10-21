@@ -48,6 +48,19 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         self.config = config
         self.purpose = purpose
         super(VesselDataset, self).__init__(root=config.download_path)
+        self._createElementMapping()
+
+    def _createElementMapping(self) -> None:
+        """
+        Creates and shuffles the list of samples
+        """
+        with h5py.File(self.raw_paths[Category.Bifurcating.value]) as f:
+            self.mapping = [(e, Category.Bifurcating) for e in f]
+
+        with h5py.File(self.raw_paths[Category.Single.value]) as f:
+            self.mapping += [(e, Category.Single) for e in f]
+
+        random.shuffle(self.mapping)
 
     def __getitem__(self, idx: int) -> Vessel:
         """
@@ -60,16 +73,9 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
             Data: The item at the specified index.
         """
         # Load the item from the processed data saved in a .hdf5 file
-        category = Category.Bifurcating if idx < 1999 else Category.Single
+        item_name, category = self.mapping[idx]
         with h5py.File(self.raw_paths[category.value], "r") as f:
-            idx = idx - 1999 if idx >= 1999 else idx
-            item_name = f"sample_{idx:04d}"
-            try:
-                item: Vessel = self.get_data_from_h5(f[item_name], category)
-            except KeyError:
-                idx = random.randint(0, len(f) - 1)
-                item_name = f"sample_{idx:04d}"
-                item = self.get_data_from_h5(f[item_name], category)
+            item: Vessel = self.get_data_from_h5(f[item_name], category)
         return item
 
     def __len__(self) -> int:
@@ -79,11 +85,7 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
         Returns:
             int: The length of the dataset.
         """
-        total_length = 0
-        for path in self.raw_paths:
-            with h5py.File(path, "r") as f:
-                total_length += len(f)
-        return total_length
+        return len(self.mapping)
 
     @property
     def labels(self) -> torch.Tensor:

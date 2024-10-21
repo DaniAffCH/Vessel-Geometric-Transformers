@@ -1,5 +1,10 @@
+from typing import List
+
 import lightning as L
+import matplotlib.pyplot as plt
+import seaborn as sns
 import torch
+from sklearn.metrics import confusion_matrix
 from torch import Tensor, nn, optim
 from torchmetrics.classification import BinaryAccuracy, BinaryF1Score
 
@@ -49,6 +54,9 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         self.train_f1 = BinaryF1Score()
         self.val_f1 = BinaryF1Score()
         self.test_f1 = BinaryF1Score()
+
+        self.test_y: List[torch.Tensor] = []
+        self.test_y_hat: List[torch.Tensor] = []
 
         # Enabling fp16 precision to increase performance in Daniele's GPU ;)
         torch.set_float32_matmul_precision("medium")
@@ -173,6 +181,9 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         self.test_accuracy(preds, batch.labels)
         self.test_f1(preds, batch.labels)
 
+        self.test_y_hat.append(preds)
+        self.test_y.append(batch.labels)
+
         self.log(
             "test/loss", loss, on_step=False, on_epoch=True, prog_bar=True
         )
@@ -192,6 +203,19 @@ class BaselineTransformer(L.LightningModule):  # type: ignore[misc]
         )
 
         return loss
+
+    def on_test_epoch_end(self) -> None:
+        y_hat = torch.cat(self.test_y_hat)
+        y = torch.cat(self.test_y)
+
+        cm = confusion_matrix(y.cpu(), y_hat.cpu())
+
+        plt.figure(figsize=(10, 7))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.title("Confusion Matrix - Test Set")
+        plt.show()
 
     def configure_optimizers(self) -> optim.Optimizer:
         """
