@@ -61,6 +61,7 @@ class OptunaConfig:
 
 @dataclass
 class Config:
+    seed: int = MISSING
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     trainer: TrainerConfig = field(default_factory=TrainerConfig)
     baseline: BaselineConfig = field(default_factory=BaselineConfig)
