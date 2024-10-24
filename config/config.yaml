@@ -6,7 +6,7 @@ dataset:
   train_size: 0.75
   val_size: 0.15
   test_size: 0.1
-  batch_size: 4
+  batch_size: 8
   features_size_limit: 300
 
 baseline:
@@ -15,6 +15,11 @@ baseline:
   transformer_feedforward_dim: 16
   transformer_num_layers: 1
   learning_rate: 0.001
+  features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
+
+mlp:
+  hidden_size: 16
+  learning_rate: 0.0001
   features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 gatr:
@@ -34,6 +39,6 @@ trainer:
   resume_training: False
 
 optuna:
-  n_trials: 3
+  n_trials: 4
   seed: 42
   

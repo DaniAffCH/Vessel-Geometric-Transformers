@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import lightning as L
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
@@ -14,14 +15,14 @@ class VesselTrainer(L.Trainer):  # type: ignore[misc]
     gatr specific configurations
     """
 
-    def __init__(self, config: TrainerConfig):
+    def __init__(
+        self, config: TrainerConfig, group: Optional[str] = None
+    ) -> None:
 
         self.config = config
 
         wandb.login(key=config.wandb_api_key)  # type: ignore
-        wandb.init(  # type: ignore
-            project=config.wandb_project,
-        )
+        wandb.init(project=config.wandb_project, group=group)  # type: ignore
 
         self._checkpoint_callback = ModelCheckpoint(
             monitor="val/loss",

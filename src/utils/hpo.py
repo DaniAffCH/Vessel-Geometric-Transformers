@@ -56,7 +56,7 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
             "num_layers", choices=[1, 2, 3]
         )
         config.dataset.batch_size = trial.suggest_categorical(
-            "batch_size", choices=[8, 16, 32]
+            "batch_size", choices=[4, 8, 16]
         )
 
         print(f"Learning rate: {config.baseline.learning_rate}")
@@ -64,7 +64,7 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
         print(f"Attention Layers: {config.baseline.transformer_num_layers}")
         print(f"Batch Size: {config.dataset.batch_size}")
 
-        trainer = L.Trainer(max_epochs=3)
+        trainer = L.Trainer(max_epochs=4)
 
         trainer.fit(model, data)
         optimized_value: float = trainer.logged_metrics["val/loss"]
@@ -144,7 +144,7 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
             "num_layers", choices=[1, 2, 3]
         )
         config.dataset.batch_size = trial.suggest_categorical(
-            "batch_size", choices=[8, 16, 32]
+            "batch_size", choices=[4, 8, 16]
         )
 
         print(f"Learning rate: {config.gatr.learning_rate}")
@@ -152,7 +152,7 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
         print(f"Attention Layers: {config.gatr.num_backbone_layers}")
         print(f"Batch Size: {config.dataset.batch_size}")
 
-        trainer = L.Trainer(max_epochs=2)
+        trainer = L.Trainer(max_epochs=4)
 
         trainer.fit(model, data)
         optimized_value: float = trainer.logged_metrics["val/loss"]

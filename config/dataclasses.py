@@ -38,6 +38,13 @@ class BaselineConfig:
 
 
 @dataclass
+class MLPConfig:
+    hidden_size: int = MISSING
+    learning_rate: float = MISSING
+    features_size_limit: int = MISSING
+
+
+@dataclass
 class GatrConfig:
     hidden_size: int = MISSING
     num_backbone_layers: int = MISSING
@@ -59,3 +66,4 @@ class Config:
     baseline: BaselineConfig = field(default_factory=BaselineConfig)
     gatr: GatrConfig = field(default_factory=GatrConfig)
     optuna: OptunaConfig = field(default_factory=OptunaConfig)
+    mlp: MLPConfig = field(default_factory=MLPConfig)
