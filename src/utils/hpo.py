@@ -56,7 +56,7 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
             "num_layers", choices=[1, 2, 3]
         )
         config.dataset.batch_size = trial.suggest_categorical(
-            "batch_size", choices=[4, 8, 16]
+            "batch_size", choices=[8, 16, 32]
         )
 
         print(f"Learning rate: {config.baseline.learning_rate}")
@@ -144,7 +144,7 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
             "num_layers", choices=[1, 2, 3]
         )
         config.dataset.batch_size = trial.suggest_categorical(
-            "batch_size", choices=[4, 8, 16]
+            "batch_size", choices=[8, 16, 32]
         )
 
         print(f"Learning rate: {config.gatr.learning_rate}")

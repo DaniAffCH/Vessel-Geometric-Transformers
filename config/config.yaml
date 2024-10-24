@@ -7,7 +7,7 @@ dataset:
   val_size: 0.15
   test_size: 0.1
   batch_size: 4
-  features_size_limit: 200
+  features_size_limit: 300
 
 baseline:
   transformer_embedding_dim: 16
@@ -15,14 +15,14 @@ baseline:
   transformer_feedforward_dim: 16
   transformer_num_layers: 1
   learning_rate: 0.001
-  features_size_limit: 200 # Warning: must be the same of dataset.features_size_limit
+  features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 gatr:
   hidden_size: 16
   num_attention_heads: 4
   learning_rate: 0.0001
   num_backbone_layers: 1
-  features_size_limit: 200 # Warning: must be the same of dataset.features_size_limit
+  features_size_limit: 300 # Warning: must be the same of dataset.features_size_limit
 
 trainer:
   wandb_api_key: "41e4ba7425e35355cd4456863ed4cd9c73c084a3"
