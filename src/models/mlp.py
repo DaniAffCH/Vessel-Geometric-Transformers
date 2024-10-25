@@ -20,11 +20,14 @@ class BaselineMLP(VesselClassificationModel):
         self.config = config
 
         self.fc = nn.Sequential(
-            nn.Linear(NUM_FEATURES * self.config.features_size_limit * 16, 16),
+            nn.Linear(
+                NUM_FEATURES * self.config.features_size_limit * 16,
+                config.hidden_size,
+            ),
             nn.ReLU(),
-            nn.Linear(16, 8),
+            nn.Linear(config.hidden_size, config.hidden_size // 2),
             nn.ReLU(),
-            nn.Linear(8, 1),
+            nn.Linear(config.hidden_size // 2, 1),
         )
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:

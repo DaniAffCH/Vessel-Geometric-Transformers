@@ -10,6 +10,86 @@ def optuna_callback(study: optuna.study.Study, trial: optuna.Trial) -> None:
     print(f"Trial {trial.number} finished with value {trial.value}")
 
 
+def mlp_hpo(config: Config, data: L.LightningDataModule) -> None:
+    """
+    Perform hyperparameter optimization for the Baseline MLP model
+    using Optuna.
+    Args:
+        config (Config): Configuration object containing hyperparameter
+        settings and other configurations.
+        data (L.LightningDataModule): LightningDataModule object containing
+        the dataset.
+    Returns:
+        None
+    This function initializes an Optuna study to optimize hyperparameters
+    for the Baseline MLP model. It defines an objective function
+    that suggests hyperparameters, trains the model, and evaluates its
+    performance. The best hyperparameters found during the optimization
+    are then updated in the provided configuration object.
+    The hyperparameters optimized include:
+        - Learning rate
+        - Batch size
+    In the end, the optimal parameters are written into the config object.
+    """
+
+    print("Starting a new hyperparameter optimization study...")
+
+    def objective(
+        trial: optuna.Trial,
+        model: L.LightningModule,
+        data: L.LightningDataModule,
+    ) -> float:
+
+        print("Starting a new trial...")
+        print(f"Trial number: {trial.number}")
+
+        # Hyperparameters to optimize
+        config.mlp.learning_rate = trial.suggest_float(
+            "lr", 1e-4, 1e-1, log=True
+        )
+        config.mlp.hidden_size = trial.suggest_categorical(
+            "hidden_size", choices=[8, 16, 32]
+        )
+        config.dataset.batch_size = trial.suggest_categorical(
+            "batch_size", choices=[4, 8, 16]
+        )
+
+        print(f"Learning rate: {config.baseline.learning_rate}")
+        print(f"Batch Size: {config.dataset.batch_size}")
+
+        trainer = L.Trainer(max_epochs=4)
+
+        trainer.fit(model, data)
+        optimized_value: float = trainer.logged_metrics["val/loss"]
+        return optimized_value
+
+    model = BaselineTransformer(config.baseline)
+    sampler = optuna.samplers.TPESampler(seed=config.optuna.seed)
+    pruner = optuna.pruners.MedianPruner()
+    study = optuna.create_study(
+        direction="minimize",
+        sampler=sampler,
+        pruner=pruner,
+        study_name="baseline_hpo",
+    )
+
+    study.optimize(
+        lambda trial: objective(trial, model, data),
+        n_trials=config.optuna.n_trials,
+        callbacks=[optuna_callback],
+    )
+
+    print("Hyperparameter optimization completed.")
+    print(
+        f"Best hyperparameters found:\n\
+          Learning rate: {study.best_params['lr']}\n\
+          Batch Size: {study.best_params['batch_size']}\n"
+    )
+
+    config.mlp.learning_rate = study.best_params["lr"]
+    config.dataset.batch_size = study.best_params["batch_size"]
+
+
 def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
     """
     Perform hyperparameter optimization for the Baseline Transformer model
