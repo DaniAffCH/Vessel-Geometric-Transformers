@@ -48,7 +48,7 @@ def mlp_hpo(config: Config, data: L.LightningDataModule) -> None:
             "lr", 1e-4, 1e-1, log=True
         )
         config.mlp.hidden_size = trial.suggest_categorical(
-            "hidden_size", choices=[8, 16, 32]
+            "hidden_size", choices=[16, 32]
         )
         config.dataset.batch_size = trial.suggest_categorical(
             "batch_size", choices=[4, 8, 16]
