@@ -45,7 +45,7 @@ def mlp_hpo(config: Config, data: L.LightningDataModule) -> None:
 
         # Hyperparameters to optimize
         config.mlp.learning_rate = trial.suggest_float(
-            "lr", 1e-4, 1e-1, log=True
+            "lr", 1e-4, 1e-3, log=True
         )
         config.mlp.hidden_size = trial.suggest_categorical(
             "hidden_size", choices=[16, 32]
@@ -127,7 +127,7 @@ def baseline_hpo(config: Config, data: L.LightningDataModule) -> None:
 
         # Hyperparameters to optimize
         config.baseline.learning_rate = trial.suggest_float(
-            "lr", 1e-4, 1e-1, log=True
+            "lr", 1e-4, 1e-3, log=True
         )
         config.baseline.transformer_num_heads = trial.suggest_categorical(
             "num_heads", choices=[2, 4, 8]
@@ -215,7 +215,7 @@ def gatr_hpo(config: Config, data: L.LightningDataModule) -> None:
 
         # Hyperparameters to optimize
         config.gatr.learning_rate = trial.suggest_float(
-            "lr", 1e-4, 1e-1, log=True
+            "lr", 1e-4, 1e-3, log=True
         )
         config.gatr.num_attention_heads = trial.suggest_categorical(
             "num_heads", choices=[2, 4, 8]
