@@ -2,18 +2,11 @@
 
 This project is an unofficial implementation of [[1]](#1). The goal of this project is to solve a simple binary classification task, based on a dataset of meshes of two types of arteries: single and bifurcating. The base architecture is a transformer. We compare the approach leveraging on geometric algebra with a baseline.
 
-## Dataset
+## Execution
+You can execute the code [here](main.ipynb)
 
-There are five features for each sample:
-- Wall shear stress
-- Pressure
-- Position
-- Face
-- Inlet index (positions where inlets to arteries are located)
-
-## Embedding of data: Geometric Algebra
-
-## Operations in E(3): Equivariant layers
+## Report
+A detailed description of the project can be found [here](report.pdf)
 
 ## References
 
