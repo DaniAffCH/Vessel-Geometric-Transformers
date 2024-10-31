@@ -14,7 +14,13 @@ from src.data.datamodule import VesselBatch
 
 class VesselClassificationModel(L.LightningModule, ABC):  # type: ignore[misc]
     """
-    Base model for binary classification of vessels.
+    Base model for binary classification of vessels. This class contains all
+    what is needed to train a model for vessel classification. It defines the
+    metrics, and the training, validation and test steps, which are common to
+    all possible models. The only two things which need to be defined by the
+    concrete implementations are:
+    - The forward method, which defines the model architecture.
+    - The configure_optimizers method, which defines the optimizer.
     """
 
     def __init__(self) -> None:
@@ -39,7 +45,7 @@ class VesselClassificationModel(L.LightningModule, ABC):  # type: ignore[misc]
     @abstractmethod
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:
         """
-        Forward pass through the model.
+        Forward pass through the model. The mask is needed for the transformer.
 
         Args:
             x (Tensor): Input tensor of shape

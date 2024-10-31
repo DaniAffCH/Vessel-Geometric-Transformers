@@ -9,7 +9,12 @@ from src.utils.definitions import Category, Feature
 @dataclass
 class Vessel(Data):  # type: ignore[misc]
     """
-    Data class for handling vessel data.
+    This data class represents a vessel with the following attributes:
+    - wss (Tensor): Wall shear stress tensor.
+    - pos (Tensor): Position tensor.
+    - pressure (Tensor): Pressure tensor.
+    - face (Tensor): Face tensor.
+    - inlet_index (Tensor): Inlet index tensor.
 
     This class inherits from Data and adds print utilities.
     """

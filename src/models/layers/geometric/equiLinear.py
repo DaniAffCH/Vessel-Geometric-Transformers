@@ -5,6 +5,10 @@ from src.lib.geometricAlgebraOperations import Blade
 
 
 class EquiLinearLayer(nn.Module):  # type:ignore[misc]
+    """
+    Computes a linear transformation in the Geometric Algebra space.
+    """
+
     def __init__(self, inputFeatures: int, outputFeatures: int) -> None:
         super(EquiLinearLayer, self).__init__()
 
@@ -24,10 +28,17 @@ class EquiLinearLayer(nn.Module):  # type:ignore[misc]
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        o: output features
-        i: input features
-        b: equinLinBasis number (9)
-        g: Geometric Algebra size (16)
+        Args:
+            x: input tensor of shape (..., input features) in GA space
+
+        Returns:
+            output tensor of shape (..., output features) in GA space
+
+        o: output features i: input features b: equinLinBasis number (9) g:
+        Geometric Algebra size (16)
+
+        The product is performed by multiplying the input tensor with the
+        precomputed equiLinBasis and the weights tensor.
         """
 
         return torch.einsum(

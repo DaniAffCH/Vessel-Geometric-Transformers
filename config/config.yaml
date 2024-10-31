@@ -42,5 +42,5 @@ trainer:
 
 optuna:
   n_trials: 4
-  seed: 42
+  seed: 123
   

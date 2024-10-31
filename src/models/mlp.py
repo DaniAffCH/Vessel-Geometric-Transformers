@@ -31,6 +31,10 @@ class BaselineMLP(VesselClassificationModel):
         )
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:
+        """
+        Forward pass through the model. Applies a flattening and then a fully
+        connected layer.
+        """
         # (batch_size, num_elements*seq_length*ga_size)
         x = einops.rearrange(x, "b f d g -> b (f d g)")
         logits = self.fc(x)

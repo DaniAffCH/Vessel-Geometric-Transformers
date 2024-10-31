@@ -26,9 +26,7 @@ from src.utils.definitions import Feature
 class InMemorySubset(Subset, InMemoryDataset):  # type: ignore[misc]
     """
     A subset of an in-memory dataset.
-
-    This class represents a subset of an in-memory dataset.
-    It inherits from the `Subset` class and the `InMemoryDataset` class.
+    It is used to identify training, validation, and test sets.
 
     Args:
         dataset (InMemoryDataset): The original in-memory dataset.
@@ -198,6 +196,10 @@ class VesselDataModule(L.LightningDataModule):  # type: ignore[misc]
 
 @dataclass
 class VesselBatch:
+    """
+    Dataclass for a batch of Vessel objects
+    """
+
     data: Tensor = field(default_factory=Tensor)
     mask: Tensor = field(default_factory=Tensor)
     labels: Tensor = field(default_factory=Tensor)
@@ -210,16 +212,17 @@ def collate_vessels(
     feature: Optional[Feature] = None,
 ) -> VesselBatch:
     """
-    Collates a batch of Vessel objects into padded tensors.
+    Collates a batch of Vessel objects into padded tensors. Used by the
+    dataloaders.
 
     Args:
-        batch (List[Vessel]): A list of Vessel objects.
-        size_limit (int): Maximum number of elements a feature can have
-        pad_value (int): The value used to indicate padding
+        batch (List[Vessel]): A list of Vessel objects. size_limit (int):
+        Maximum number of elements a feature can have pad_value (int): The
+        value used to indicate padding
 
     Returns:
-        VesselBatch: A VesselBatch object containing the padded batch tensor,
-        masks tensor, and labels tensor.
+        VesselBatch: A VesselBatch object containing the padded batch
+        tensor, masks tensor, and labels tensor.
     """
 
     elem: Vessel = batch[0]
@@ -290,6 +293,9 @@ def collate_vessels(
 
 
 def normalize(data: Tensor, epsilon: float = 1e-6) -> Tensor:
+    """
+    Normalizes the input tensor using min-max normalization.
+    """
     min = data.min()
     max = data.max()
     data = (data - min) / (

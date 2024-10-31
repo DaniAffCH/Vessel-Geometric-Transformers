@@ -52,7 +52,11 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
     def _createElementMapping(self) -> None:
         """
-        Creates and shuffles the list of samples
+        Creates and shuffles the list of samples. Since the samples
+        are accessed directly from the HDF5 files, we only need to
+        store the name of the samples. The mapping is a list of
+        tuples, where the first element is the name of the sample and
+        the second element is the category of the sample.
         """
         with h5py.File(self.raw_paths[Category.Bifurcating.value]) as f:
             self.mapping = [(e, Category.Bifurcating) for e in f]
@@ -64,7 +68,8 @@ class VesselDataset(InMemoryDataset):  # type: ignore[misc]
 
     def __getitem__(self, idx: int) -> Vessel:
         """
-        Get the item at the specified index.
+        Get the item at the specified index by using the mapping (to
+        enforce shuffling).
 
         Args:
             idx (int): The index of the item to retrieve.

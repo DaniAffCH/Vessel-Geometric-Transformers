@@ -9,6 +9,14 @@ from src.models.layers.geometric.equiLinear import EquiLinearLayer
 
 
 class GeometricBilinearLayer(nn.Module):  # type:ignore[misc]
+    """
+    Computes a bilinear transformation in the Geometric Algebra space. This
+    layer concatenates the geometric product and the join of the input
+    tensors, after applying an equilinear transformation to the input
+    multivectors. The final output is then projected again through an
+    equilinear transformation.
+    """
+
     def __init__(self, inputFeatures: int, outputFeatures: int) -> None:
         super(GeometricBilinearLayer, self).__init__()
 

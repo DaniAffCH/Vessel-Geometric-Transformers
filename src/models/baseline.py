@@ -9,7 +9,19 @@ from src.models.layers.default.transformer import TransformerEncoder
 
 class BaselineTransformer(VesselClassificationModel):
     """
-    Baseline Transformer model for classification.
+    Baseline (encoder-only) Transformer model for classification.
+
+    There are three main parts:
+
+    - Embedder: Linear layer that maps the
+    input to the embedding dimension. In our case, the embedding dimension
+    is the same as the geometric algebra size, namely 16
+
+    - Encoder: Transformer encoder that processes the input sequence,
+      giving each element, be it a point, a pressure value or a face, a
+      richer meaning
+
+    - Projection: Fully connected layer that does the final classification
 
     Args:
         config (BaselineConfig): Configuration object

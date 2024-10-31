@@ -8,6 +8,11 @@ from src.models.layers.geometric.equiLinear import EquiLinearLayer
 
 
 class GeometricAttentionLayer(nn.Module):  # type:ignore[misc]
+    """
+    Computes the attention mechanism in the Geometric Algebra space. The
+    doto product is replaced with the invariant inner product.
+    """
+
     def __init__(self, embed_dim: int, num_heads: int) -> None:
         super(GeometricAttentionLayer, self).__init__()
 

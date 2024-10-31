@@ -6,12 +6,14 @@ from typing_extensions import override
 
 class GeometricAlgebraBase(ABC):
     """
-    Base class for geometric algebra operations.
-    Operations return a 16-element torch tensor representing a multivector.
-    The basis combination of the multivector
-    are defined in the following order:
+    Base class for geometric algebra elements. Every element of the
+    projective geometric algebra returns a 16-element torch tensor
+    representing a multivector. This class can be extended to define
+    specific geometric objects or operations in projective geometric
+    algebra.
 
-    1 e0 e1 e2 e3 e01 e02 e03 e12 e13 e23 e012 e013 e023 e123 e01234
+    The basis combination of the multivector are defined in the following
+    order: 1 e0 e1 e2 e3 e01 e02 e03 e12 e13 e23 e012 e013 e023 e123 e01234
     """
 
     numBasis: int = 4  # Number of basis vectors

@@ -16,6 +16,12 @@ class GeometricOperation(ABC):
 
 
 class Blade(GeometricOperation):
+    """
+    Blade operator for the Geometric Algebra G_{3,0,1}. Applied to a
+    multivector, it removes the components which are not of grade k. In
+    practice, every <x>k is collected into a single matrix, which is then
+    used in the equilinear layer.
+    """
 
     # This function always compute the same matrix.
     # Using a lru cache to avoid repeated computations
@@ -70,6 +76,14 @@ class Blade(GeometricOperation):
 
 
 class GeometricProduct(GeometricOperation):
+    """
+    This class implements the geometric product operation for the GA
+    G_{3,0,1}. The geometric product is a bilinear operation that takes two
+    multivectors and returns a new multivector. Bilinear means that it is
+    linear in both arguments. Intuitively, this product encompasses both
+    the inner (dot) and outer (wedge) product. This allows to encapsulate
+    directions, angles and areas within a single linear operation.
+    """
 
     # This function always retrieve the same matrix.
     # Using a lru cache to avoid repeated computations
